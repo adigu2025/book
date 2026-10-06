@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>木子澄安診所線上預約</title>
+<style>
+  /* 版面：單欄表單，由上而下依序選擇，底部固定送出列。配色取米白日系：生成り（底）、鶯（主色）、藍鼠（複診）、桜鼠（初診）、柿（送出） */
+  :root {
+    --bg: #f7f2e6;
+    --card: #fffcf4;
+    --fg: #3e362c;
+    --muted: #8c8171;
+    --line: #e6ddc8;
+    --accent: #7c8a5a;
+    --accent-soft: #eef0e1;
+    --ret: #70909f;
+    --ret-soft: #e9eeea;
+    --new: #c38b7e;
+    --new-soft: #f6e9e1;
+    --send: #a8623a;
+    --on-color: #fff8ef;
+    --warn: #a8503b;
+    --warn-soft: #f3e4dd;
+    --mode: var(--ret);
+    --mode-soft: var(--ret-soft);
+    --font: "Hiragino Sans", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", -apple-system, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #262219; --card: #322d22; --fg: #ece3d2; --muted: #ada28c; --line: #453f30;
+      --accent: #a8b584; --accent-soft: #3a3e2b; --ret: #9cb9c6; --ret-soft: #2b3a3d;
+      --new: #d9a99c; --new-soft: #40302a; --send: #d98a52; --on-color: #2a1d10;
+      --warn: #d98468; --warn-soft: #3c2822; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #262219; --card: #322d22; --fg: #ece3d2; --muted: #ada28c; --line: #453f30;
+    --accent: #a8b584; --accent-soft: #3a3e2b; --ret: #9cb9c6; --ret-soft: #2b3a3d;
+    --new: #d9a99c; --new-soft: #40302a; --send: #d98a52; --on-color: #2a1d10;
+    --warn: #d98468; --warn-soft: #3c2822; color-scheme: dark;
+  }
+  body.is-new { --mode: var(--new); --mode-soft: var(--new-soft); }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg); font-family: var(--font);
+    font-size: 18px; line-height: 1.6; margin: 0; letter-spacing: .02em;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 160px; }
+  header { padding-block: 28px 4px; display: grid; gap: 4px; }
+  .clinic { font-size: 14px; letter-spacing: .2em; color: var(--accent); font-weight: 600; }
+  h1 { font-size: 27px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tag {
+    font-size: 14px; font-weight: 600; padding: 3px 11px; border-radius: 999px;
+    background: var(--mode-soft); color: var(--mode); border: 1px solid var(--mode);
+  }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 16px; }
+  section {
+    margin-top: 22px; padding: 14px; border-radius: 16px; border: 1.5px solid transparent;
+    transition: border-color .2s, background .2s;
+  }
+  section.missing { border-color: var(--warn); background: var(--warn-soft); }
+  section > h2 { font-size: 18px; margin: 0 0 10px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+  section > h2 small { font-weight: 400; color: var(--muted); font-size: 15px; }
+  .req { color: var(--warn); font-size: 14px; font-weight: 400; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .seg button {
+    border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font: inherit;
+    padding: 14px 12px; border-radius: 14px; cursor: pointer; display: grid; gap: 2px;
+  }
+  .seg button small { font-size: 14px; color: var(--muted); }
+  #t-return[aria-pressed="true"] { border-color: var(--ret); background: var(--ret-soft); color: var(--ret); font-weight: 600; }
+  #t-new[aria-pressed="true"] { border-color: var(--new); background: var(--new-soft); color: var(--new); font-weight: 600; }
+  .grid { display: grid; gap: 8px; }
+  .items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dates { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sessions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .opt {
+    background: var(--card); color: var(--fg); border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 13px 6px; font: inherit; cursor: pointer; text-align: center; min-width: 0;
+  }
+  .opt b { display: block; font-weight: 500; }
+  .opt span { display: block; font-size: 14px; color: var(--muted); }
+  .opt[aria-pressed="true"] { border-color: var(--mode); background: var(--mode-soft); }
+  .opt[aria-pressed="true"] b { color: var(--mode); font-weight: 600; }
+  .opt.weekend span { color: var(--new); }
+  :is(.opt, .seg button, input, textarea, .send):focus-visible { outline: 2px solid var(--mode); outline-offset: 2px; }
+  .month { grid-column: 1 / -1; font-size: 15px; color: var(--muted); margin-top: 4px; }
+  .hint { color: var(--muted); font-size: 16px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 12px 14px; }
+  .field { display: grid; gap: 4px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { font-size: 16px; color: var(--muted); }
+  input, textarea {
+    width: 100%; font: inherit; color: var(--fg); background: var(--card);
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 12px;
+  }
+  input[aria-invalid="true"] { border-color: var(--warn); }
+  pre.preview {
+    white-space: pre-wrap; word-break: break-word; margin: 0; font-family: var(--font); font-size: 16px;
+    background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--mode);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .bar .inner { max-width: 560px; margin: 0 auto; display: grid; gap: 6px; }
+  .send {
+    display: block; text-align: center; text-decoration: none; background: var(--send); color: var(--on-color);
+    font-weight: 600; padding: 15px; border-radius: 14px; font-size: 19px; letter-spacing: .06em;
+  }
+  .send.incomplete { opacity: .55; }
+  .status { font-size: 15px; color: var(--muted); text-align: center; min-height: 1.2em; }
+  .status.warn { color: var(--warn); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { section { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="clinic">木子澄安診所</div>
+    <h1>線上預約 <span class="tag" id="tag">複診</span></h1>
+    <p>選好內容後按下方按鈕，會開啟診所 LINE 聊天室並帶入預約內容，再按一次「傳送」即完成申請。櫃台確認後會回覆你。</p>
+  </header>
+
+  <section id="sec-type">
+    <h2>初診或複診</h2>
+    <div class="seg" role="group" aria-label="初診或複診">
+      <button type="button" id="t-return" aria-pressed="true">複診<small>曾在本診所看過</small></button>
+      <button type="button" id="t-new" aria-pressed="false">初診<small>第一次來</small></button>
+    </div>
+  </section>
+
+  <section id="sec-item">
+    <h2>預約項目 <span class="req">必填</span></h2>
+    <div class="grid items" id="items"></div>
+  </section>
+
+  <section id="sec-other" hidden>
+    <h2>看診目的 <span class="req">必填</span></h2>
+    <div class="field"><input id="otherPurpose" maxlength="30"></div>
+  </section>
+
+  <section id="sec-date">
+    <h2>日期 <span class="req">必填</span> <small>開放 30 天內</small></h2>
+    <div id="dates"></div>
+  </section>
+
+  <section id="sec-session">
+    <h2>時段 <span class="req">必填</span></h2>
+    <div id="sessions"></div>
+  </section>
+
+  <section id="sec-new" hidden>
+    <h2>初診資料 <span class="req">必填</span></h2>
+    <div class="field"><label for="name">姓名</label><input id="name" maxlength="20" autocomplete="name"></div>
+    <div class="field"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
+    <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678" maxlength="12"></div>
+  </section>
+
+  <section id="sec-note">
+    <h2>備註 <small>選填</small></h2>
+    <div class="field"><textarea id="note" rows="2" maxlength="100" placeholder="例如：想做無痛胃鏡、最近胃痛兩週"></textarea></div>
+  </section>
+
+  <section>
+    <h2>將傳送的內容</h2>
+    <pre class="preview" id="preview"></pre>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <a class="send incomplete" id="send" href="#">用 LINE 傳送預約</a>
+    <div class="status" id="status">填寫完成後按上方按鈕</div>
+  </div>
+</div>
+
+<script src="holidays.js"></script>
+<script>
+// ===== 設定區 =====
+const LINE_ID = '@muzichengan';
+const BOOK_FROM_DAYS = 1;   // 最早可約明天
+const BOOK_DAYS = 30;       // 開放幾天內
+const HOLIDAYS = window.HOLIDAYS || [];
+
+const S = { AM: '早診', PM: '午診', EVE: '晚診' };
+const FULL = { 0: ['AM'], 1: ['AM', 'PM', 'EVE'], 2: ['AM', 'PM', 'EVE'], 3: ['AM', 'PM', 'EVE'], 4: ['AM', 'PM', 'EVE'], 5: ['AM', 'PM', 'EVE'], 6: ['AM'] };
+const WOUND = { 1: ['AM', 'PM'], 2: ['EVE'], 3: ['AM', 'PM'], 4: ['EVE'], 5: ['PM', 'EVE'], 6: ['AM'] };
+const ENDO = { 0: ['AM'], 1: ['EVE'], 2: ['AM', 'PM'], 3: ['EVE'], 4: ['AM', 'PM'], 5: ['AM'] };
+const ITEMS = [
+  { name: '健保門診', sch: FULL },
+  { name: '自費健檢', sch: FULL },
+  { name: '傷口照護', sch: WOUND },
+  { name: '高山症與旅遊醫學', sch: WOUND },
+  { name: '減重諮詢', sch: FULL },
+  { name: '腸胃鏡諮詢', sch: ENDO },
+  { name: '自費點滴', sch: FULL },
+  { name: '其他', sch: FULL, custom: true },
+];
+// ==================
+
+const WK = ['日', '一', '二', '三', '四', '五', '六'];
+const st = { isNew: false, item: null, date: null, session: null, tried: false };
+const $ = id => document.getElementById(id);
+
+function ymd(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function sessionsOn(item, d) {
+  const key = ymd(d);
+  if (HOLIDAYS.includes(key)) return [];
+  return (item.sch[d.getDay()] || []).filter(s => !HOLIDAYS.includes(key + ' ' + S[s]));
+}
+function days() {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const out = [];
+  for (let i = BOOK_FROM_DAYS; i <= BOOK_DAYS; i++) { const d = new Date(t); d.setDate(t.getDate() + i); out.push(d); }
+  return out;
+}
+function btn(html, pressed, onClick, extra) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'opt' + (extra ? ' ' + extra : ''); b.innerHTML = html;
+  b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+  b.onclick = onClick;
+  return b;
+}
+function hint(text) { const p = document.createElement('div'); p.className = 'hint'; p.textContent = text; return p; }
+
+function renderItems() {
+  const box = $('items'); box.innerHTML = '';
+  ITEMS.forEach(it => box.appendChild(btn('<b>' + it.name + '</b>', st.item === it, () => {
+    if (st.item !== it) { st.item = it; st.date = null; st.session = null; }
+    renderAll();
+  })));
+}
+function renderDates() {
+  const box = $('dates'); box.innerHTML = '';
+  if (!st.item) { box.appendChild(hint('請先選擇預約項目')); return; }
+  const grid = document.createElement('div'); grid.className = 'grid dates';
+  let month = -1;
+  days().forEach(d => {
+    if (!sessionsOn(st.item, d).length) return;
+    if (d.getMonth() !== month) {
+      month = d.getMonth();
+      const m = document.createElement('div'); m.className = 'month'; m.textContent = (month + 1) + ' 月';
+      grid.appendChild(m);
+    }
+    const key = ymd(d);
+    const weekend = d.getDay() === 0 || d.getDay() === 6;
+    grid.appendChild(btn('<b>' + (d.getMonth() + 1) + '/' + d.getDate() + '</b><span>週' + WK[d.getDay()] + '</span>',
+      st.date === key, () => { st.date = key; st.session = null; renderAll(); }, weekend ? 'weekend' : ''));
+  });
+  box.appendChild(grid);
+}
+function renderSessions() {
+  const box = $('sessions'); box.innerHTML = '';
+  if (!st.date) { box.appendChild(hint('請先選擇日期')); return; }
+  const grid = document.createElement('div'); grid.className = 'grid sessions';
+  sessionsOn(st.item, parse(st.date)).forEach(s => grid.appendChild(btn('<b>' + S[s] + '</b>', st.session === s, () => {
+    st.session = s; renderAll();
+  })));
+  box.appendChild(grid);
+}
+
+function phoneVal() { return $('phone').value.replace(/[\s-]/g, ''); }
+function message() {
+  const lines = ['【預約申請】' + (st.isNew ? '初診' : '複診')];
+  let itemLine = st.item ? st.item.name : '（未選）';
+  if (st.item && st.item.custom) {
+    const purpose = $('otherPurpose').value.trim();
+    itemLine += '－' + (purpose || '（未填看診目的）');
+  }
+  lines.push('項目：' + itemLine);
+  if (st.date) {
+    const d = parse(st.date);
+    lines.push('時間：' + (d.getMonth() + 1) + '月' + d.getDate() + '日（週' + WK[d.getDay()] + '）' + (st.session ? S[st.session] : '（未選時段）'));
+  } else {
+    lines.push('時間：（未選）');
+  }
+  if (st.isNew) {
+    lines.push('姓名：' + ($('name').value.trim() || '（未填）'));
+    lines.push('生日：' + ($('birthday').value || '（未填）'));
+    lines.push('手機：' + (phoneVal() || '（未填）'));
+  }
+  const note = $('note').value.trim();
+  if (note) lines.push('備註：' + note);
+  return lines.join('\n');
+}
+
+// 回傳所有缺漏，依畫面由上而下排序
+function missing() {
+  const list = [];
+  if (!st.item) list.push({ sec: 'sec-item', msg: '請選擇預約項目' });
+  if (st.item && st.item.custom && !$('otherPurpose').value.trim()) list.push({ sec: 'sec-other', input: 'otherPurpose', msg: '請填寫看診目的' });
+  if (!st.date) list.push({ sec: 'sec-date', msg: '請選擇日期' });
+  if (!st.session) list.push({ sec: 'sec-session', msg: '請選擇時段' });
+  if (st.isNew) {
+    if (!$('name').value.trim()) list.push({ sec: 'sec-new', input: 'name', msg: '請填寫姓名' });
+    if (!$('birthday').value) list.push({ sec: 'sec-new', input: 'birthday', msg: '請填寫出生日期' });
+    if (!/^09\d{8}$/.test(phoneVal())) list.push({ sec: 'sec-new', input: 'phone', msg: phoneVal() ? '手機號碼格式不對，請填 09 開頭共 10 碼' : '請填寫手機' });
+  }
+  return list;
+}
+
+function update() {
+  $('preview').textContent = message();
+  const miss = missing();
+  const a = $('send');
+  document.querySelectorAll('section.missing').forEach(s => s.classList.remove('missing'));
+  ['name', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
+
+  if (miss.length) {
+    a.classList.add('incomplete'); a.href = '#';
+    if (st.tried) {
+      miss.forEach(m => { $(m.sec).classList.add('missing'); if (m.input) $(m.input).setAttribute('aria-invalid', 'true'); });
+      $('status').textContent = miss[0].msg + (miss.length > 1 ? '（還有 ' + (miss.length - 1) + ' 項未完成）' : '');
+      $('status').className = 'status warn';
+    } else {
+      $('status').textContent = '填寫完成後按上方按鈕';
+      $('status').className = 'status';
+    }
+  } else {
+    a.classList.remove('incomplete');
+    a.href = 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(message());
+    $('status').textContent = '開啟 LINE 後，記得再按一次「傳送」';
+    $('status').className = 'status';
+  }
+}
+function renderAll() {
+  document.body.classList.toggle('is-new', st.isNew);
+  $('t-return').setAttribute('aria-pressed', st.isNew ? 'false' : 'true');
+  $('t-new').setAttribute('aria-pressed', st.isNew ? 'true' : 'false');
+  $('tag').textContent = st.isNew ? '初診' : '複診';
+  $('sec-new').hidden = !st.isNew;
+  $('sec-other').hidden = !(st.item && st.item.custom);
+  renderItems(); renderDates(); renderSessions(); update();
+}
+
+$('t-return').onclick = () => { st.isNew = false; renderAll(); };
+$('t-new').onclick = () => { st.isNew = true; renderAll(); };
+['name', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
+$('birthday').max = ymd(new Date());
+$('send').addEventListener('click', e => {
+  const miss = missing();
+  if (!miss.length) return;
+  e.preventDefault();
+  st.tried = true;
+  update();
+  const first = miss[0];
+  $(first.sec).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 300);
+});
+renderAll();
+</script>
+</body>
+</html>
