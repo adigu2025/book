@@ -89,6 +89,19 @@
   .opt.weekend span { color: var(--new); }
   :is(.opt, .seg button, input, textarea, .send):focus-visible { outline: 2px solid var(--mode); outline-offset: 2px; }
   .month { grid-column: 1 / -1; font-size: 15px; color: var(--muted); margin-top: 4px; }
+  .schedule { display: grid; grid-template-columns: 48px repeat(7, 1fr); gap: 4px; align-items: center; }
+  .schedule .day { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); padding-bottom: 4px; }
+  .schedule .time { font-size: 11px; line-height: 1.35; color: var(--muted); text-align: center; }
+  .schedule .cell { display: flex; align-items: center; justify-content: center; min-height: 34px; }
+  .dot {
+    width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .dot-a { background: var(--ret); }
+  .dot-b { background: var(--accent); }
+  .schedule-note { color: var(--warn); font-weight: 600; font-size: 14px; margin: 12px 0 0; }
+  .schedule-legend { display: grid; gap: 4px; margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .dot-sm { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
   .hint { color: var(--muted); font-size: 16px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 12px 14px; }
   .field { display: grid; gap: 4px; margin-bottom: 12px; }
   .field:last-child { margin-bottom: 0; }
@@ -123,7 +136,7 @@
   <header>
     <div class="clinic">木子澄安診所</div>
     <h1>線上預約 <span class="tag" id="tag">複診</span></h1>
-    <p>選好內容後按下方按鈕，會開啟診所 LINE 聊天室並帶入預約內容，再按一次「傳送」即完成申請。櫃台確認後會回覆你。</p>
+    <p>依照就醫需求填寫後送出，櫃台確認後會回覆。</p>
   </header>
 
   <section id="sec-type">
@@ -131,6 +144,46 @@
     <div class="seg" role="group" aria-label="初診或複診">
       <button type="button" id="t-return" aria-pressed="true">複診<small>曾在本診所看過</small></button>
       <button type="button" id="t-new" aria-pressed="false">初診<small>第一次來</small></button>
+    </div>
+  </section>
+
+  <section id="sec-schedule">
+    <h2>醫師門診時刻表</h2>
+    <div class="schedule">
+      <div class="corner"></div>
+      <div class="day">一</div><div class="day">二</div><div class="day">三</div><div class="day">四</div><div class="day">五</div><div class="day">六</div><div class="day">日</div>
+
+      <div class="time">早<br>08:00<br>12:00</div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+
+      <div class="time">午<br>14:30<br>17:30</div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+
+      <div class="time">晚<br>18:00<br>21:00</div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"><span class="dot dot-b">林</span></div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"><span class="dot dot-a">李</span></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+    </div>
+    <p class="schedule-note">休診前 10 分鐘停止掛號</p>
+    <div class="schedule-legend">
+      <span><i class="dot-sm dot-a"></i>李品翰醫師－急診外傷科</span>
+      <span><i class="dot-sm dot-b"></i>林彥廷醫師－肝膽胃腸科</span>
     </div>
   </section>
 
