@@ -140,7 +140,7 @@
 
   <section id="sec-other" hidden>
     <h2>看診目的 <span class="req">必填</span></h2>
-    <div class="field"><input id="otherPurpose" maxlength="30"></div>
+    <div class="field"><input id="otherPurpose" maxlength="40"></div>
   </section>
 
   <section id="sec-date">
@@ -199,7 +199,7 @@ const ITEMS = [
   { name: '減重諮詢', sch: FULL },
   { name: '腸胃鏡諮詢', sch: ENDO },
   { name: '自費點滴', sch: FULL },
-  { name: '其他', sch: FULL, custom: true },
+  { name: '其他', label: '其他（例如超音波）', sch: FULL, custom: true },
 ];
 // ==================
 
@@ -233,7 +233,7 @@ function hint(text) { const p = document.createElement('div'); p.className = 'hi
 
 function renderItems() {
   const box = $('items'); box.innerHTML = '';
-  ITEMS.forEach(it => box.appendChild(btn('<b>' + it.name + '</b>', st.item === it, () => {
+  ITEMS.forEach(it => box.appendChild(btn('<b>' + (it.label || it.name) + '</b>', st.item === it, () => {
     if (st.item !== it) { st.item = it; st.date = null; st.session = null; }
     renderAll();
   })));
