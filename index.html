@@ -64,6 +64,7 @@
   section > h2 { font-size: 18px; margin: 0 0 10px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   section > h2 small { font-weight: 400; color: var(--muted); font-size: 15px; }
   #checkin-note, #date-note { flex-basis: 100%; }
+  #date-note .tel { color: var(--accent); font-weight: 600; text-decoration: underline; }
   .req { color: var(--warn); font-size: 14px; font-weight: 400; }
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .seg button {
@@ -144,7 +145,7 @@
   </section>
 
   <section id="sec-date">
-    <h2>日期 <span class="req">必填</span> <small id="date-note">開放預約 30 天內預約。<br>當天已開始的門診時段無法線上預約，如有需要請來電 07-3739496</small></h2>
+    <h2>日期 <span class="req">必填</span> <small id="date-note">開放 30 天內門診預約。<br>當天已開始的門診無法線上預約。<br>如有需要請來電 <a class="tel" href="tel:073739496">07-3739496</a>。</small></h2>
     <div id="dates"></div>
   </section>
 
