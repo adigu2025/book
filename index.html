@@ -63,7 +63,7 @@
   section.missing { border-color: var(--warn); background: var(--warn-soft); }
   section > h2 { font-size: 18px; margin: 0 0 10px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   section > h2 small { font-weight: 400; color: var(--muted); font-size: 15px; }
-  #checkin-note { flex-basis: 100%; }
+  #checkin-note, #date-note { flex-basis: 100%; }
   .req { color: var(--warn); font-size: 14px; font-weight: 400; }
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .seg button {
@@ -144,7 +144,7 @@
   </section>
 
   <section id="sec-date">
-    <h2>日期 <span class="req">必填</span> <small>開放 30 天內</small></h2>
+    <h2>日期 <span class="req">必填</span> <small id="date-note">開放 30 天內，當天已開始的時段不開放預約</small></h2>
     <div id="dates"></div>
   </section>
 
@@ -157,7 +157,7 @@
     <h2>初診資料 <span class="req">必填</span></h2>
     <div class="field"><label for="name">姓名</label><input id="name" maxlength="20" autocomplete="name"></div>
     <div class="field"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
-    <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678" maxlength="12"></div>
+    <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="12"></div>
   </section>
 
   <section id="sec-note">
@@ -182,7 +182,7 @@
 <script>
 // ===== 設定區 =====
 const LINE_ID = '@muzichengan';
-const BOOK_FROM_DAYS = 1;   // 最早可約明天
+const BOOK_FROM_DAYS = 0;   // 今天也算，當天已開始的時段由 sessionsOn() 自動過濾
 const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
 
@@ -211,10 +211,16 @@ function ymd(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function sessionStarted(s, d) {
+  const now = new Date();
+  if (ymd(d) !== ymd(now)) return false;
+  const [h, m] = SESSION_TIME[s].split(' - ')[0].split(':').map(Number);
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+}
 function sessionsOn(item, d) {
   const key = ymd(d);
   if (HOLIDAYS.includes(key)) return [];
-  return (item.sch[d.getDay()] || []).filter(s => !HOLIDAYS.includes(key + ' ' + S[s]));
+  return (item.sch[d.getDay()] || []).filter(s => !HOLIDAYS.includes(key + ' ' + S[s]) && !sessionStarted(s, d));
 }
 function days() {
   const t = new Date(); t.setHours(0, 0, 0, 0);
