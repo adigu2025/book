@@ -61,8 +61,9 @@
     transition: border-color .2s, background .2s;
   }
   section.missing { border-color: var(--warn); background: var(--warn-soft); }
-  section > h2 { font-size: 18px; margin: 0 0 10px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+  section > h2 { font-size: 18px; margin: 0 0 10px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   section > h2 small { font-weight: 400; color: var(--muted); font-size: 15px; }
+  #checkin-note { flex-basis: 100%; }
   .req { color: var(--warn); font-size: 14px; font-weight: 400; }
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .seg button {
@@ -148,7 +149,7 @@
   </section>
 
   <section id="sec-session">
-    <h2>時段 <span class="req">必填</span></h2>
+    <h2>時段 <span class="req">必填</span> <small id="checkin-note"></small></h2>
     <div id="sessions"></div>
   </section>
 
@@ -186,6 +187,7 @@ const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
 
 const S = { AM: '早診', PM: '午診', EVE: '晚診' };
+const SESSION_TIME = { AM: '08:00 - 12:00', PM: '14:30 - 17:30', EVE: '18:00 - 21:00' };
 const FULL = { 0: ['AM'], 1: ['AM', 'PM', 'EVE'], 2: ['AM', 'PM', 'EVE'], 3: ['AM', 'PM', 'EVE'], 4: ['AM', 'PM', 'EVE'], 5: ['AM', 'PM', 'EVE'], 6: ['AM'] };
 const WOUND = { 1: ['AM', 'PM'], 2: ['EVE'], 3: ['AM', 'PM'], 4: ['EVE'], 5: ['PM', 'EVE'], 6: ['AM'] };
 const ENDO = { 0: ['AM'], 1: ['EVE'], 2: ['AM', 'PM'], 3: ['EVE'], 4: ['AM', 'PM'], 5: ['AM'] };
@@ -255,11 +257,16 @@ function renderDates() {
   });
   box.appendChild(grid);
 }
+function checkinNote() {
+  if (st.item && st.item.name === '自費點滴') return '自費點滴請於門診結束前 60 分鐘報到';
+  return st.isNew ? '初診請於門診結束前 30 分鐘報到' : '複診請於門診結束前 10 分鐘報到';
+}
 function renderSessions() {
+  $('checkin-note').textContent = checkinNote();
   const box = $('sessions'); box.innerHTML = '';
   if (!st.date) { box.appendChild(hint('請先選擇日期')); return; }
   const grid = document.createElement('div'); grid.className = 'grid sessions';
-  sessionsOn(st.item, parse(st.date)).forEach(s => grid.appendChild(btn('<b>' + S[s] + '</b>', st.session === s, () => {
+  sessionsOn(st.item, parse(st.date)).forEach(s => grid.appendChild(btn('<b>' + S[s] + '</b><span>' + SESSION_TIME[s] + '</span>', st.session === s, () => {
     st.session = s; renderAll();
   })));
   box.appendChild(grid);
