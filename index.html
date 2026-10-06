@@ -267,7 +267,7 @@ function renderSessions() {
 
 function phoneVal() { return $('phone').value.replace(/[\s-]/g, ''); }
 function message() {
-  const lines = ['【預約申請】' + (st.isNew ? '初診' : '複診')];
+  const lines = ['【預約】' + (st.isNew ? '初診' : '複診')];
   let itemLine = st.item ? st.item.name : '（未選）';
   if (st.item && st.item.custom) {
     const purpose = $('otherPurpose').value.trim();
