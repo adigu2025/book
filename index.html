@@ -337,7 +337,7 @@ function birthdayText() {
   const v = $('birthday').value;
   if (!v) return '（未填）';
   const [y, m, d] = v.split('-').map(Number);
-  return y + '年' + m + '月' + d + '日（民國' + (y - 1911) + '年' + m + '月' + d + '日）';
+  return y + '年' + m + '月' + d + '日\n（民國' + (y - 1911) + '年' + m + '月' + d + '日）';
 }
 function message() {
   const lines = ['【預約】' + (st.isNew ? '初診' : '複診')];
