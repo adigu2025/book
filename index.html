@@ -333,6 +333,12 @@ function renderSessions() {
 }
 
 function phoneVal() { return $('phone').value.replace(/[\s-]/g, ''); }
+function birthdayText() {
+  const v = $('birthday').value;
+  if (!v) return '（未填）';
+  const [y, m, d] = v.split('-').map(Number);
+  return y + '年' + m + '月' + d + '日（民國' + (y - 1911) + '年' + m + '月' + d + '日）';
+}
 function message() {
   const lines = ['【預約】' + (st.isNew ? '初診' : '複診')];
   let itemLine = st.item ? st.item.name : '（未選）';
@@ -349,7 +355,7 @@ function message() {
   }
   if (st.isNew) {
     lines.push('姓名：' + ($('name').value.trim() || '（未填）'));
-    lines.push('生日：' + ($('birthday').value || '（未填）'));
+    lines.push('生日：' + birthdayText());
     lines.push('手機：' + (phoneVal() || '（未填）'));
   }
   const note = $('note').value.trim();
