@@ -147,6 +147,11 @@
     </div>
   </section>
 
+  <section id="sec-name">
+    <h2>姓名 <span class="req">必填</span></h2>
+    <div class="field"><input id="patientName" maxlength="20" autocomplete="name"></div>
+  </section>
+
   <section id="sec-schedule">
     <h2>醫師門診時刻表</h2>
     <div class="schedule">
@@ -209,7 +214,6 @@
 
   <section id="sec-new" hidden>
     <h2>初診資料 <span class="req">必填</span></h2>
-    <div class="field"><label for="name">姓名</label><input id="name" maxlength="20" autocomplete="name"></div>
     <div class="field"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
     <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="12"></div>
   </section>
@@ -341,6 +345,7 @@ function birthdayText() {
 }
 function message() {
   const lines = ['【預約】' + (st.isNew ? '初診' : '複診')];
+  lines.push('姓名：' + ($('patientName').value.trim() || '（未填）'));
   let itemLine = st.item ? st.item.name : '（未選）';
   if (st.item && st.item.custom) {
     const purpose = $('otherPurpose').value.trim();
@@ -354,7 +359,6 @@ function message() {
     lines.push('時間：（未選）');
   }
   if (st.isNew) {
-    lines.push('姓名：' + ($('name').value.trim() || '（未填）'));
     lines.push('生日：' + birthdayText());
     lines.push('手機：' + (phoneVal() || '（未填）'));
   }
@@ -366,12 +370,12 @@ function message() {
 // 回傳所有缺漏，依畫面由上而下排序
 function missing() {
   const list = [];
+  if (!$('patientName').value.trim()) list.push({ sec: 'sec-name', input: 'patientName', msg: '請填寫姓名' });
   if (!st.item) list.push({ sec: 'sec-item', msg: '請選擇預約項目' });
   if (st.item && st.item.custom && !$('otherPurpose').value.trim()) list.push({ sec: 'sec-other', input: 'otherPurpose', msg: '請填寫看診目的' });
   if (!st.date) list.push({ sec: 'sec-date', msg: '請選擇日期' });
   if (!st.session) list.push({ sec: 'sec-session', msg: '請選擇時段' });
   if (st.isNew) {
-    if (!$('name').value.trim()) list.push({ sec: 'sec-new', input: 'name', msg: '請填寫姓名' });
     if (!$('birthday').value) list.push({ sec: 'sec-new', input: 'birthday', msg: '請填寫出生日期' });
     if (!/^09\d{8}$/.test(phoneVal())) list.push({ sec: 'sec-new', input: 'phone', msg: phoneVal() ? '手機號碼格式不對，請填 09 開頭共 10 碼' : '請填寫手機' });
   }
@@ -383,7 +387,7 @@ function update() {
   const miss = missing();
   const a = $('send');
   document.querySelectorAll('section.missing').forEach(s => s.classList.remove('missing'));
-  ['name', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
+  ['patientName', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
 
   if (miss.length) {
     a.classList.add('incomplete'); a.href = '#';
@@ -414,7 +418,7 @@ function renderAll() {
 
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
 $('t-new').onclick = () => { st.isNew = true; renderAll(); };
-['name', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
+['patientName', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
 $('birthday').max = ymd(new Date());
 $('send').addEventListener('click', e => {
   const miss = missing();
