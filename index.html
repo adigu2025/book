@@ -110,6 +110,7 @@
   .field { display: grid; gap: 4px; margin-bottom: 12px; }
   .field:last-child { margin-bottom: 0; }
   .field label { font-size: 16px; color: var(--muted); }
+  .privacy-note { font-size: 13px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
   input, textarea {
     width: 100%; font: inherit; color: var(--fg); background: var(--card);
     border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 12px;
@@ -221,6 +222,11 @@
 
   <section id="sec-new" hidden>
     <h2>初診資料 <span class="req">必填</span></h2>
+    <div class="field">
+      <label for="idNumber">身分證字號（外籍人士請填居留證號碼或護照號碼）</label>
+      <input id="idNumber" maxlength="12">
+      <p class="privacy-note">以上資料僅供本診所看診及預約作業使用，您的個人資料我們會依相關個人資料保護規定妥善保管。</p>
+    </div>
     <div class="field"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
     <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="12"></div>
   </section>
@@ -366,6 +372,7 @@ function message() {
     lines.push('時間：（未選）');
   }
   if (st.isNew) {
+    lines.push('身分證字號：' + ($('idNumber').value.trim() || '（未填）'));
     lines.push('生日：' + birthdayText());
     lines.push('手機：' + (phoneVal() || '（未填）'));
   }
@@ -383,6 +390,7 @@ function missing() {
   if (!st.date) list.push({ sec: 'sec-date', msg: '請選擇日期' });
   if (!st.session) list.push({ sec: 'sec-session', msg: '請選擇時段' });
   if (st.isNew) {
+    if (!$('idNumber').value.trim()) list.push({ sec: 'sec-new', input: 'idNumber', msg: '請填寫身分證字號' });
     if (!$('birthday').value) list.push({ sec: 'sec-new', input: 'birthday', msg: '請填寫出生日期' });
     if (!/^09\d{8}$/.test(phoneVal())) list.push({ sec: 'sec-new', input: 'phone', msg: phoneVal() ? '手機號碼格式不對，請填 09 開頭共 10 碼' : '請填寫手機' });
   }
@@ -394,7 +402,7 @@ function update() {
   const miss = missing();
   const a = $('send');
   document.querySelectorAll('section.missing').forEach(s => s.classList.remove('missing'));
-  ['patientName', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
+  ['patientName', 'idNumber', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
 
   if (miss.length) {
     a.classList.add('incomplete'); a.href = '#';
@@ -425,7 +433,7 @@ function renderAll() {
 
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
 $('t-new').onclick = () => { st.isNew = true; renderAll(); };
-['patientName', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
+['patientName', 'idNumber', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
 $('birthday').max = ymd(new Date());
 $('send').addEventListener('click', e => {
   const miss = missing();
