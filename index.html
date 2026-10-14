@@ -1,8 +1,18 @@
 <!doctype html>
 <html lang="zh-Hant-TW">
 <head>
+<script>
+// GitHub Pages 對這個網址下了 Cache-Control: max-age=600，網頁內的 meta 標籤蓋不過伺服器標頭。
+// 沒帶版本參數就立刻用當下時間戳記重新導向一次，確保每次開啟都抓到全新版本，不會卡在 10 分鐘快取裡。
+if (!location.search.includes('v=')) {
+  location.replace(location.pathname + '?v=' + Date.now());
+}
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>木子澄安診所線上預約</title>
 <style>
   /* 版面：單欄表單，由上而下依序選擇，底部固定送出列。配色取米白日系：生成り（底）、鶯（主色）、藍鼠（複診）、桜鼠（初診）、柿（送出） */
@@ -93,6 +103,10 @@
   .opt.weekend span { color: var(--new); }
   :is(.opt, .seg button, input, textarea, .send):focus-visible { outline: 2px solid var(--mode); outline-offset: 2px; }
   .month { grid-column: 1 / -1; font-size: 15px; color: var(--muted); margin-top: 4px; }
+  .schedule-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px; box-shadow: 0 1px 3px rgba(62, 54, 44, .05);
+  }
   .schedule { display: grid; grid-template-columns: 48px repeat(7, 1fr); gap: 4px; align-items: center; }
   .schedule .day { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); padding-bottom: 4px; }
   .schedule .time { font-size: 11px; line-height: 1.35; color: var(--muted); text-align: center; }
@@ -110,6 +124,7 @@
   .field { display: grid; gap: 4px; margin-bottom: 12px; }
   .field:last-child { margin-bottom: 0; }
   .field label { font-size: 16px; color: var(--muted); }
+  .privacy-note { font-size: 13px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
   input, textarea {
     width: 100%; font: inherit; color: var(--fg); background: var(--card);
     border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 12px;
@@ -135,6 +150,10 @@
   .send.incomplete { opacity: .55; }
   .status { font-size: 15px; color: var(--muted); text-align: center; min-height: 1.2em; }
   .status.warn { color: var(--warn); font-weight: 600; }
+  .status.ready {
+    font-size: 16px; font-weight: 700; color: var(--mode); background: var(--mode-soft);
+    border-radius: 10px; padding: 8px 10px; line-height: 1.4;
+  }
   @media (prefers-reduced-motion: reduce) { section { transition: none; } }
 </style>
 </head>
@@ -161,6 +180,7 @@
 
   <section id="sec-schedule">
     <h2>醫師門診時刻表</h2>
+    <div class="schedule-card">
     <div class="schedule">
       <div class="corner"></div>
       <div class="day">一</div><div class="day">二</div><div class="day">三</div><div class="day">四</div><div class="day">五</div><div class="day">六</div><div class="day">日</div>
@@ -197,6 +217,7 @@
       <span><i class="dot-sm dot-a"></i>李品翰醫師－急診外傷科</span>
       <span><i class="dot-sm dot-b"></i>林彥廷醫師－肝膽胃腸科</span>
     </div>
+    </div>
   </section>
 
   <section id="sec-item">
@@ -220,9 +241,14 @@
   </section>
 
   <section id="sec-new" hidden>
-    <h2>初診資料 <span class="req">必填</span></h2>
-    <div class="field"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
-    <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="12"></div>
+    <h2>初診資料</h2>
+    <div class="field">
+      <label for="idNumber">身分證字號 <span class="req">必填</span><br>（外籍人士請填居留證號碼或護照號碼）</label>
+      <input id="idNumber" maxlength="12">
+      <p class="privacy-note">以上資料僅供本診所看診及預約作業使用，<br>您的個人資料我們會依相關個人資料保護規定妥善保管。</p>
+    </div>
+    <div class="field"><label for="birthday">出生日期 <span class="req">必填</span></label><input id="birthday" type="date"></div>
+    <div class="field"><label for="phone">手機 <span class="req">必填</span></label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="12"></div>
   </section>
 
   <section id="sec-note">
@@ -247,6 +273,7 @@
 <script>
 // ===== 設定區 =====
 const LINE_ID = '@muzichengan';
+const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
 const BOOK_FROM_DAYS = 0;   // 今天也算，當天已開始的時段由 sessionsOn() 自動過濾
 const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
@@ -366,6 +393,7 @@ function message() {
     lines.push('時間：（未選）');
   }
   if (st.isNew) {
+    lines.push('身分證字號：' + ($('idNumber').value.trim() || '（未填）'));
     lines.push('生日：' + birthdayText());
     lines.push('手機：' + (phoneVal() || '（未填）'));
   }
@@ -383,6 +411,7 @@ function missing() {
   if (!st.date) list.push({ sec: 'sec-date', msg: '請選擇日期' });
   if (!st.session) list.push({ sec: 'sec-session', msg: '請選擇時段' });
   if (st.isNew) {
+    if (!$('idNumber').value.trim()) list.push({ sec: 'sec-new', input: 'idNumber', msg: '請填寫身分證字號' });
     if (!$('birthday').value) list.push({ sec: 'sec-new', input: 'birthday', msg: '請填寫出生日期' });
     if (!/^09\d{8}$/.test(phoneVal())) list.push({ sec: 'sec-new', input: 'phone', msg: phoneVal() ? '手機號碼格式不對，請填 09 開頭共 10 碼' : '請填寫手機' });
   }
@@ -394,7 +423,7 @@ function update() {
   const miss = missing();
   const a = $('send');
   document.querySelectorAll('section.missing').forEach(s => s.classList.remove('missing'));
-  ['patientName', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
+  ['patientName', 'idNumber', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
 
   if (miss.length) {
     a.classList.add('incomplete'); a.href = '#';
@@ -408,9 +437,9 @@ function update() {
     }
   } else {
     a.classList.remove('incomplete');
-    a.href = 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(message());
-    $('status').textContent = '開啟 LINE 後，記得再按一次「傳送」';
-    $('status').className = 'status';
+    a.href = CHAT_URL;
+    $('status').textContent = '按下會複製預約內容並開啟 LINE，請在聊天室貼上後按「傳送」';
+    $('status').className = 'status ready';
   }
 }
 function renderAll() {
@@ -423,19 +452,43 @@ function renderAll() {
   renderItems(); renderDates(); renderSessions(); update();
 }
 
+function copyTextFallback(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  ta.style.top = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
+  }
+  copyTextFallback(text);
+  return Promise.resolve();
+}
+
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
 $('t-new').onclick = () => { st.isNew = true; renderAll(); };
-['patientName', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
+['patientName', 'idNumber', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
 $('birthday').max = ymd(new Date());
 $('send').addEventListener('click', e => {
   const miss = missing();
-  if (!miss.length) return;
   e.preventDefault();
-  st.tried = true;
-  update();
-  const first = miss[0];
-  $(first.sec).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-  if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 300);
+  if (miss.length) {
+    st.tried = true;
+    update();
+    const first = miss[0];
+    $(first.sec).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 300);
+    return;
+  }
+  const go = () => { location.href = CHAT_URL; };
+  copyText(message()).then(go, go);
 });
 renderAll();
 </script>
