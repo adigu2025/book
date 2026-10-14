@@ -416,7 +416,7 @@ function update() {
     }
   } else {
     a.classList.remove('incomplete');
-    a.href = 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(message());
+    a.href = 'https://line.me/R/oaMessage/' + LINE_ID + '/?' + encodeURIComponent(message());
     $('status').textContent = '開啟 LINE 後，記得再按一次「傳送」';
     $('status').className = 'status';
   }
