@@ -103,6 +103,10 @@ if (!location.search.includes('v=')) {
   .opt.weekend span { color: var(--new); }
   :is(.opt, .seg button, input, textarea, .send):focus-visible { outline: 2px solid var(--mode); outline-offset: 2px; }
   .month { grid-column: 1 / -1; font-size: 15px; color: var(--muted); margin-top: 4px; }
+  .schedule-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px; box-shadow: 0 1px 3px rgba(62, 54, 44, .05);
+  }
   .schedule { display: grid; grid-template-columns: 48px repeat(7, 1fr); gap: 4px; align-items: center; }
   .schedule .day { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); padding-bottom: 4px; }
   .schedule .time { font-size: 11px; line-height: 1.35; color: var(--muted); text-align: center; }
@@ -146,6 +150,10 @@ if (!location.search.includes('v=')) {
   .send.incomplete { opacity: .55; }
   .status { font-size: 15px; color: var(--muted); text-align: center; min-height: 1.2em; }
   .status.warn { color: var(--warn); font-weight: 600; }
+  .status.ready {
+    font-size: 16px; font-weight: 700; color: var(--mode); background: var(--mode-soft);
+    border-radius: 10px; padding: 8px 10px; line-height: 1.4;
+  }
   @media (prefers-reduced-motion: reduce) { section { transition: none; } }
 </style>
 </head>
@@ -172,6 +180,7 @@ if (!location.search.includes('v=')) {
 
   <section id="sec-schedule">
     <h2>醫師門診時刻表</h2>
+    <div class="schedule-card">
     <div class="schedule">
       <div class="corner"></div>
       <div class="day">一</div><div class="day">二</div><div class="day">三</div><div class="day">四</div><div class="day">五</div><div class="day">六</div><div class="day">日</div>
@@ -207,6 +216,7 @@ if (!location.search.includes('v=')) {
     <div class="schedule-legend">
       <span><i class="dot-sm dot-a"></i>李品翰醫師－急診外傷科</span>
       <span><i class="dot-sm dot-b"></i>林彥廷醫師－肝膽胃腸科</span>
+    </div>
     </div>
   </section>
 
@@ -429,7 +439,7 @@ function update() {
     a.classList.remove('incomplete');
     a.href = CHAT_URL;
     $('status').textContent = '按下會複製預約內容並開啟 LINE，請在聊天室貼上後按「傳送」';
-    $('status').className = 'status';
+    $('status').className = 'status ready';
   }
 }
 function renderAll() {
