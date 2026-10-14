@@ -275,6 +275,7 @@
 <script>
 // ===== 設定區 =====
 const LINE_ID = '@muzichengan';
+const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
 const BOOK_FROM_DAYS = 0;   // 今天也算，當天已開始的時段由 sessionsOn() 自動過濾
 const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
@@ -438,8 +439,8 @@ function update() {
     }
   } else {
     a.classList.remove('incomplete');
-    a.href = 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(message());
-    $('status').textContent = '開啟 LINE 後，記得再按一次「傳送」';
+    a.href = CHAT_URL;
+    $('status').textContent = '按下會複製預約內容並開啟 LINE，請在聊天室貼上後按「傳送」';
     $('status').className = 'status';
   }
 }
@@ -459,13 +460,21 @@ $('t-new').onclick = () => { st.isNew = true; renderAll(); };
 $('birthday').max = ymd(new Date());
 $('send').addEventListener('click', e => {
   const miss = missing();
-  if (!miss.length) return;
   e.preventDefault();
-  st.tried = true;
-  update();
-  const first = miss[0];
-  $(first.sec).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-  if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 300);
+  if (miss.length) {
+    st.tried = true;
+    update();
+    const first = miss[0];
+    $(first.sec).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 300);
+    return;
+  }
+  const go = () => { location.href = CHAT_URL; };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(message()).then(go, go);
+  } else {
+    go();
+  }
 });
 renderAll();
 </script>
