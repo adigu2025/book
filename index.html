@@ -13,258 +13,366 @@ if (!location.search.includes('v=')) {
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>木子澄安診所線上預約</title>
 <style>
-  /* 版面：單欄表單，由上而下依序選擇，底部固定送出列。配色取米白日系：生成り（底）、鶯（主色）、藍鼠（複診）、桜鼠（初診）、柿（送出） */
+  /* 版面：iOS 分組清單風格（Apple HIG），單欄步驟卡片，選完自動帶到下一步；日期用月曆；底部固定列顯示已選內容與送出鈕。
+     配色採診所品牌色：Teal（主色、複診）、Gold（強調、送出、初診）、Navy（文字）。 */
   :root {
-    --bg: #f7f2e6;
-    --card: #fffcf4;
-    --fg: #3e362c;
-    --muted: #8c8171;
-    --line: #e6ddc8;
-    --accent: #7c8a5a;
-    --accent-soft: #eef0e1;
-    --ret: #70909f;
-    --ret-soft: #e9eeea;
-    --new: #c38b7e;
-    --new-soft: #f6e9e1;
-    --send: #a8623a;
-    --on-color: #fff8ef;
-    --warn: #a8503b;
-    --warn-soft: #f3e4dd;
-    --mode: var(--ret);
-    --mode-soft: var(--ret-soft);
-    --font: "Hiragino Sans", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", -apple-system, sans-serif;
+    --bg: #F2F2F7;
+    --card: #FFFFFF;
+    --fill: rgba(120, 120, 128, .12);
+    --label: #152831;
+    --label2: rgba(21, 40, 49, .64);
+    --label3: rgba(21, 40, 49, .3);
+    --sep: rgba(21, 40, 49, .13);
+    --teal: #3E6A7C;
+    --teal-soft: rgba(62, 106, 124, .12);
+    --gold: #BC7F30;
+    --gold-text: #8F5C1A;
+    --gold-soft: rgba(188, 127, 48, .14);
+    --red: #C2362B;
+    --red-soft: rgba(194, 54, 43, .07);
+    --on: #FFFFFF;
+    --send-text: #FFFFFF;
+    --shadow: 0 1px 2px rgba(21, 40, 49, .05);
+    --mode: var(--teal);
+    --mode-text: var(--teal);
+    --mode-soft: var(--teal-soft);
+    --ease: cubic-bezier(.25, .1, .25, 1);
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Helvetica Neue", sans-serif;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #262219; --card: #322d22; --fg: #ece3d2; --muted: #ada28c; --line: #453f30;
-      --accent: #a8b584; --accent-soft: #3a3e2b; --ret: #9cb9c6; --ret-soft: #2b3a3d;
-      --new: #d9a99c; --new-soft: #40302a; --send: #d98a52; --on-color: #2a1d10;
-      --warn: #d98468; --warn-soft: #3c2822; color-scheme: dark;
+      --bg: #000000; --card: #1C1C1E; --fill: rgba(118, 118, 128, .24);
+      --label: #F2F2F7; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
+      --teal: #7FB0C4; --teal-soft: rgba(127, 176, 196, .18); --gold: #E0A65A; --gold-text: #E0A65A; --gold-soft: rgba(224, 166, 90, .18);
+      --red: #FF6B5E; --red-soft: rgba(255, 107, 94, .12); --on: #0B1A20; --send-text: #1C1C1E; --shadow: none;
+      color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #262219; --card: #322d22; --fg: #ece3d2; --muted: #ada28c; --line: #453f30;
-    --accent: #a8b584; --accent-soft: #3a3e2b; --ret: #9cb9c6; --ret-soft: #2b3a3d;
-    --new: #d9a99c; --new-soft: #40302a; --send: #d98a52; --on-color: #2a1d10;
-    --warn: #d98468; --warn-soft: #3c2822; color-scheme: dark;
+    --bg: #000000; --card: #1C1C1E; --fill: rgba(118, 118, 128, .24);
+    --label: #F2F2F7; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
+    --teal: #7FB0C4; --teal-soft: rgba(127, 176, 196, .18); --gold: #E0A65A; --gold-text: #E0A65A; --gold-soft: rgba(224, 166, 90, .18);
+    --red: #FF6B5E; --red-soft: rgba(255, 107, 94, .12); --on: #0B1A20; --send-text: #1C1C1E; --shadow: none;
+    color-scheme: dark;
   }
-  body.is-new { --mode: var(--new); --mode-soft: var(--new-soft); }
+  body.is-new { --mode: var(--gold); --mode-text: var(--gold-text); --mode-soft: var(--gold-soft); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { scroll-padding-top: 12px; -webkit-text-size-adjust: 100%; }
   body {
-    background: var(--bg); color: var(--fg); font-family: var(--font);
-    font-size: 18px; line-height: 1.6; margin: 0; letter-spacing: .02em;
+    background: var(--bg); color: var(--label); font-family: var(--font);
+    font-size: 17px; line-height: 1.5; margin: 0; counter-reset: step;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 160px; }
-  header { padding-block: 28px 4px; display: grid; gap: 4px; }
-  .clinic { font-size: 14px; letter-spacing: .2em; color: var(--accent); font-weight: 600; }
-  h1 { font-size: 27px; margin: 0; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 210px; display: grid; gap: 24px; }
+
+  /* 標頭（Large Title） */
+  header { padding-top: calc(28px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; }
+  .clinic { font-size: 13px; font-weight: 600; letter-spacing: .12em; color: var(--teal); margin: 0; }
+  h1 { font-size: 34px; line-height: 1.2; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; letter-spacing: .01em; }
   .tag {
-    font-size: 14px; font-weight: 600; padding: 3px 11px; border-radius: 999px;
-    background: var(--mode-soft); color: var(--mode); border: 1px solid var(--mode);
+    font-size: 15px; font-weight: 600; padding: 3px 12px; border-radius: 999px;
+    background: var(--mode-soft); color: var(--mode-text);
+    transition: background .2s var(--ease), color .2s var(--ease);
   }
-  header p { margin: 4px 0 0; color: var(--muted); font-size: 16px; }
-  section {
-    margin-top: 22px; padding: 14px; border-radius: 16px; border: 1.5px solid transparent;
-    transition: border-color .2s, background .2s;
+  .lead { margin: 4px 0 0; color: var(--label2); font-size: 15px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 15px; color: var(--label2); }
+  .flow li { display: flex; align-items: center; gap: 6px; }
+  .flow li + li::before { content: "›"; color: var(--label3); font-size: 19px; line-height: 1; }
+  .flow b { color: var(--label); font-weight: 600; }
+
+  /* 步驟：標題在卡片外（iOS 分組清單的區段標頭） */
+  .sec-title {
+    font-size: 15px; font-weight: 600; color: var(--label2); margin: 0 4px 8px;
+    display: flex; align-items: center; gap: 8px;
   }
-  section.missing { border-color: var(--warn); background: var(--warn-soft); }
-  section > h2 { font-size: 18px; margin: 0 0 10px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-  section > h2 small { font-weight: 400; color: var(--muted); font-size: 15px; }
-  #checkin-note, #date-note { flex-basis: 100%; }
-  #date-note .tel { color: var(--accent); font-weight: 600; text-decoration: underline; }
-  .req { color: var(--warn); font-size: 14px; font-weight: 400; }
-  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .step > .sec-title::before {
+    counter-increment: step; content: counter(step);
+    width: 22px; height: 22px; border-radius: 50%; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--mode-soft); color: var(--mode-text); font-size: 13px; font-weight: 700;
+    transition: background .2s var(--ease), color .2s var(--ease);
+  }
+  .step.done > .sec-title::before { content: "✓"; background: var(--mode); color: var(--on); }
+  .sec-title .opt-tag { font-weight: 400; color: var(--label2); font-size: 13px; }
+  .req { color: var(--red); font-size: 13px; font-weight: 500; margin-left: auto; }
+  .note { font-size: 14px; color: var(--label2); margin: -2px 4px 8px; line-height: 1.55; }
+  .note a { color: var(--teal); font-weight: 600; }
+  .card {
+    background: var(--card); border-radius: 14px; padding: 14px; box-shadow: var(--shadow);
+    transition: box-shadow .2s var(--ease), background .2s var(--ease);
+  }
+  .missing .card { box-shadow: inset 0 0 0 2px var(--red); background: var(--red-soft); }
+
+  /* 分段控制（初診／複診） */
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; background: var(--fill); border-radius: 12px; padding: 3px; }
   .seg button {
-    border: 1.5px solid var(--line); background: var(--card); color: var(--fg); font: inherit;
-    padding: 14px 12px; border-radius: 14px; cursor: pointer; display: grid; gap: 2px;
-    touch-action: manipulation; transition: border-color .2s, background .2s, transform .1s;
+    border: 0; background: transparent; color: var(--label); font: inherit; font-size: 17px; font-weight: 500;
+    min-height: 56px; padding: 8px; border-radius: 10px; cursor: pointer; display: grid; place-content: center; gap: 0;
+    touch-action: manipulation; transition: background .2s var(--ease), box-shadow .2s var(--ease), transform .1s var(--ease);
   }
+  .seg button small { font-size: 13px; font-weight: 400; color: var(--label2); }
   .seg button:active { transform: scale(.97); }
-  .seg button small { font-size: 14px; color: var(--muted); }
-  #t-return[aria-pressed="true"] { border-color: var(--ret); background: var(--ret-soft); color: var(--ret); font-weight: 600; }
-  #t-new[aria-pressed="true"] { border-color: var(--new); background: var(--new-soft); color: var(--new); font-weight: 600; }
+  .seg button[aria-pressed="true"] { background: var(--card); box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); font-weight: 600; }
+  #t-return[aria-pressed="true"] { color: var(--teal); }
+  #t-new[aria-pressed="true"] { color: var(--gold-text); }
+
+  /* 選項按鈕 */
   .grid { display: grid; gap: 8px; }
   .items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .dates { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .sessions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .opt {
-    background: var(--card); color: var(--fg); border: 1.5px solid var(--line); border-radius: 12px;
-    padding: 13px 6px; font: inherit; cursor: pointer; text-align: center; min-width: 0;
-    touch-action: manipulation; transition: border-color .2s, background .2s, transform .1s;
+    background: var(--fill); color: var(--label); border: 0; border-radius: 12px;
+    min-height: 50px; padding: 11px 6px; font: inherit; cursor: pointer; text-align: center; min-width: 0;
+    touch-action: manipulation; transition: background .2s var(--ease), color .2s var(--ease), transform .1s var(--ease);
   }
   .opt:active { transform: scale(.96); }
   .opt b { display: block; font-weight: 500; }
-  .opt span { display: block; font-size: 14px; color: var(--muted); }
-  .opt[aria-pressed="true"] { border-color: var(--mode); background: var(--mode-soft); }
-  .opt[aria-pressed="true"] b { color: var(--mode); font-weight: 600; }
-  .opt.weekend span { color: var(--new); }
-  :is(.opt, .seg button, input, textarea, .send):focus-visible { outline: 2px solid var(--mode); outline-offset: 2px; }
-  .month { grid-column: 1 / -1; font-size: 15px; color: var(--muted); margin-top: 4px; }
-  .schedule-card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-    padding: 14px; box-shadow: 0 1px 3px rgba(62, 54, 44, .05);
+  .opt span { display: block; font-size: 13px; color: var(--label2); }
+  .opt[aria-pressed="true"] { background: var(--mode); color: var(--on); }
+  .opt[aria-pressed="true"] b { font-weight: 600; }
+  .opt[aria-pressed="true"] span { color: var(--on); opacity: .9; }
+  :is(.opt, .day-btn, .seg button, input, textarea, .send, summary):focus-visible { outline: 3px solid var(--mode-soft); outline-offset: 2px; box-shadow: 0 0 0 2px var(--mode); }
+
+  /* 月曆 */
+  .cal-range { font-size: 15px; font-weight: 600; margin: 0 0 10px; }
+  .cal-head, .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .cal-head { margin-bottom: 6px; }
+  .cal-head span { text-align: center; font-size: 13px; font-weight: 600; color: var(--label3); }
+  .cal-head span.we { color: var(--gold-text); opacity: .8; }
+  .cal > * { display: flex; justify-content: center; }
+  .day-btn, .day-off {
+    width: 100%; max-width: 46px; aspect-ratio: 1; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font: inherit; font-size: 17px; line-height: 1.05; padding: 0;
   }
-  .schedule { display: grid; grid-template-columns: 48px repeat(7, 1fr); gap: 4px; align-items: center; }
-  .schedule .day { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); padding-bottom: 4px; }
-  .schedule .time { font-size: 11px; line-height: 1.35; color: var(--muted); text-align: center; }
+  .day-btn {
+    border: 0; background: transparent; color: var(--label); cursor: pointer; font-weight: 500;
+    touch-action: manipulation; transition: background .2s var(--ease), color .2s var(--ease), transform .1s var(--ease);
+  }
+  .day-btn:not([aria-pressed="true"]) { background: var(--fill); }
+  .day-btn:active { transform: scale(.92); }
+  .day-btn.today { color: var(--mode-text); font-weight: 700; }
+  .day-btn[aria-pressed="true"] { background: var(--mode); color: var(--on); font-weight: 700; }
+  .day-off { color: var(--label3); }
+  .day-btn small, .day-off small { font-size: 9px; letter-spacing: 0; font-weight: 600; }
+  .day-btn.mo, .day-off.mo { font-size: 13px; }
+  .picked { margin: 12px 0 0; font-size: 15px; color: var(--mode-text); font-weight: 600; min-height: 1.5em; }
+
+  /* 門診時刻表（參考資訊，可收合） */
+  details.ref { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); }
+  details.ref summary {
+    cursor: pointer; list-style: none; min-height: 52px; padding: 12px 16px; font-weight: 600; font-size: 17px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  details.ref summary::-webkit-details-marker { display: none; }
+  details.ref summary .sym { color: var(--teal); flex: none; }
+  details.ref summary .hint-r { margin-left: auto; font-size: 15px; font-weight: 400; color: var(--label2); }
+  details.ref summary .chev { color: var(--label3); flex: none; transition: transform .25s var(--ease); }
+  details.ref[open] summary .chev { transform: rotate(90deg); }
+  details.ref .body { padding: 2px 14px 16px; border-top: .5px solid var(--sep); }
+  .schedule { display: grid; grid-template-columns: 46px repeat(7, minmax(0, 1fr)); gap: 4px; align-items: center; margin-top: 12px; }
+  .schedule .day { text-align: center; font-size: 13px; font-weight: 600; color: var(--label2); padding-bottom: 4px; }
+  .schedule .time { font-size: 11px; line-height: 1.35; color: var(--label2); text-align: center; }
   .schedule .cell { display: flex; align-items: center; justify-content: center; min-height: 34px; }
   .dot {
     width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 600;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .dot-a { background: var(--ret); }
-  .dot-b { background: var(--accent); }
-  .schedule-note { color: var(--warn); font-weight: 600; font-size: 14px; margin: 12px 0 0; }
-  .schedule-legend { display: grid; gap: 4px; margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .dot-a { background: #BC7F30; }
+  .dot-b { background: #3E6A7C; }
+  .schedule-note { color: var(--red); font-weight: 600; font-size: 14px; margin: 12px 0 0; }
+  .schedule-legend { display: grid; gap: 4px; margin-top: 8px; font-size: 14px; color: var(--label2); }
   .dot-sm { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
-  .hint { color: var(--muted); font-size: 16px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 12px 14px; }
-  .field { display: grid; gap: 4px; margin-bottom: 12px; }
-  .field:last-child { margin-bottom: 0; }
-  .field label { font-size: 16px; color: var(--muted); }
-  .privacy-note { font-size: 13px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+
+  /* 表單 */
+  .hint { color: var(--label2); font-size: 15px; text-align: center; padding: 8px 4px; }
+  .field { display: grid; gap: 6px; }
+  .field + .field { margin-top: 14px; }
+  .field label { font-size: 15px; color: var(--label2); }
+  .field label .sub { display: block; font-size: 13px; }
+  .privacy {
+    margin: 14px 0 0; font-size: 13px; line-height: 1.6; color: var(--label2);
+    background: var(--fill); border-radius: 10px; padding: 10px 12px;
+  }
   input, textarea {
-    width: 100%; font: inherit; color: var(--fg); background: var(--card);
-    border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 12px;
+    width: 100%; min-height: 46px; font: inherit; font-size: 17px; color: var(--label); background: var(--fill);
+    border: 0; border-radius: 10px; padding: 11px 12px; -webkit-appearance: none; appearance: none;
+    transition: box-shadow .2s var(--ease);
   }
-  input[aria-invalid="true"] { border-color: var(--warn); }
+  input[type="date"] { display: block; text-align: left; }
+  input:focus, textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--mode); }
+  input[aria-invalid="true"] { box-shadow: 0 0 0 2px var(--red); }
+  #idNumber { text-transform: uppercase; letter-spacing: .06em; }
   pre.preview {
-    white-space: pre-wrap; word-break: break-word; margin: 0; font-family: var(--font); font-size: 16px;
-    background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--mode);
-    border-radius: 12px; padding: 12px 14px;
+    white-space: pre-wrap; word-break: break-word; margin: 0; font-family: var(--font); font-size: 16px; line-height: 1.6;
+    border-left: 3px solid var(--mode); padding: 2px 0 2px 12px;
   }
+  .rev { font-size: 12px; color: var(--label3); margin: -8px 4px 0; }
+
+  /* 底部送出列 */
   .bar {
-    position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-    box-shadow: 0 -4px 14px rgba(62, 54, 44, .08);
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--card);
+    border-top: .5px solid var(--sep);
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
   }
-  .bar .inner { max-width: 560px; margin: 0 auto; display: grid; gap: 6px; }
+  .bar .inner { max-width: 560px; margin: 0 auto; display: grid; gap: 8px; }
+  .summary { font-size: 15px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .summary .tag { font-size: 13px; padding: 1px 9px; flex: none; }
+  .summary span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; color: var(--label2); }
+  .summary span.ok { color: var(--label); font-weight: 500; }
   .send {
-    display: block; text-align: center; text-decoration: none; background: var(--send); color: var(--on-color);
-    font-weight: 600; padding: 15px; border-radius: 14px; font-size: 19px; letter-spacing: .06em;
-    touch-action: manipulation; transition: transform .1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px;
+    text-decoration: none; background: var(--gold); color: var(--send-text);
+    font-weight: 700; padding: 12px 20px; border-radius: 999px; font-size: 19px; letter-spacing: .04em;
+    touch-action: manipulation; transition: transform .1s var(--ease), opacity .2s var(--ease);
   }
   .send:not(.incomplete):active { transform: scale(.98); }
-  .send.incomplete { opacity: .55; }
-  .status { font-size: 15px; color: var(--muted); text-align: center; min-height: 1.2em; }
-  .status.warn { color: var(--warn); font-weight: 600; }
+  .send.incomplete { opacity: .45; }
+  .status { font-size: 14px; color: var(--label2); text-align: center; min-height: 1.2em; line-height: 1.45; }
+  .status.warn { color: var(--red); font-weight: 600; }
   .status.ready {
-    font-size: 16px; font-weight: 700; color: var(--mode); background: var(--mode-soft);
-    border-radius: 10px; padding: 8px 10px; line-height: 1.4;
+    font-size: 16px; font-weight: 700; color: var(--mode-text); background: var(--mode-soft);
+    border-radius: 10px; padding: 8px 10px;
   }
-  @media (prefers-reduced-motion: reduce) { section { transition: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before { transition: none !important; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="clinic">木子澄安診所</div>
+    <p class="clinic">木子澄安診所</p>
     <h1>線上預約 <span class="tag" id="tag">複診</span></h1>
-    <p>依照就醫需求填寫後送出，櫃台確認後會回覆。</p>
+    <p class="lead">依照就醫需求填寫後送出，櫃台確認後會回覆。</p>
+    <ol class="flow">
+      <li><b>填寫資料</b></li>
+      <li>開啟 LINE</li>
+      <li>按「傳送」</li>
+    </ol>
   </header>
 
-  <section id="sec-type">
-    <h2>初診或複診</h2>
-    <div class="seg" role="group" aria-label="初診或複診">
-      <button type="button" id="t-return" aria-pressed="true">複診<small>曾在本診所看過</small></button>
-      <button type="button" id="t-new" aria-pressed="false">初診<small>第一次來</small></button>
+  <section id="sec-type" class="step">
+    <h2 class="sec-title">初診或複診</h2>
+    <div class="card">
+      <div class="seg" role="group" aria-label="初診或複診">
+        <button type="button" id="t-return" aria-pressed="true">複診<small>曾在本診所看過</small></button>
+        <button type="button" id="t-new" aria-pressed="false">初診<small>第一次來</small></button>
+      </div>
     </div>
   </section>
 
-  <section id="sec-name">
-    <h2>姓名 <span class="req">必填</span></h2>
-    <div class="field"><input id="patientName" maxlength="20" autocomplete="name"></div>
+  <section id="sec-name" class="step">
+    <h2 class="sec-title">姓名 <span class="req">必填</span></h2>
+    <div class="card"><input id="patientName" maxlength="20" autocomplete="name" aria-label="姓名"></div>
   </section>
 
-  <section id="sec-schedule">
-    <h2>醫師門診時刻表</h2>
-    <div class="schedule-card">
-    <div class="schedule">
-      <div class="corner"></div>
-      <div class="day">一</div><div class="day">二</div><div class="day">三</div><div class="day">四</div><div class="day">五</div><div class="day">六</div><div class="day">日</div>
+  <details class="ref" id="sec-schedule">
+    <summary>
+      <svg class="sym" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+      醫師門診時刻表
+      <span class="hint-r" id="sched-hint">展開</span>
+      <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </summary>
+    <div class="body">
+      <div class="schedule">
+        <div class="corner"></div>
+        <div class="day">一</div><div class="day">二</div><div class="day">三</div><div class="day">四</div><div class="day">五</div><div class="day">六</div><div class="day">日</div>
 
-      <div class="time">早<br>08:00<br>12:00</div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="time">早<br>08:00<br>12:00</div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
 
-      <div class="time">午<br>14:30<br>17:30</div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"></div>
-      <div class="cell"></div>
+        <div class="time">午<br>14:30<br>17:30</div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
 
-      <div class="time">晚<br>18:00<br>21:00</div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"><span class="dot dot-b">林</span></div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"><span class="dot dot-a">李</span></div>
-      <div class="cell"></div>
-      <div class="cell"></div>
+        <div class="time">晚<br>18:00<br>21:00</div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"><span class="dot dot-b">林</span></div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"><span class="dot dot-a">李</span></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+      </div>
+      <p class="schedule-note">休診前 10 分鐘停止掛號</p>
+      <div class="schedule-legend">
+        <span><i class="dot-sm dot-a"></i>李品翰醫師－急診外傷科</span>
+        <span><i class="dot-sm dot-b"></i>林彥廷醫師－肝膽胃腸科</span>
+      </div>
     </div>
-    <p class="schedule-note">休診前 10 分鐘停止掛號</p>
-    <div class="schedule-legend">
-      <span><i class="dot-sm dot-a"></i>李品翰醫師－急診外傷科</span>
-      <span><i class="dot-sm dot-b"></i>林彥廷醫師－肝膽胃腸科</span>
+  </details>
+
+  <section id="sec-item" class="step">
+    <h2 class="sec-title">預約項目 <span class="req">必填</span></h2>
+    <div class="card"><div class="grid items" id="items"></div></div>
+  </section>
+
+  <section id="sec-other" class="step" hidden>
+    <h2 class="sec-title">看診目的 <span class="req">必填</span></h2>
+    <div class="card"><input id="otherPurpose" maxlength="40" aria-label="看診目的"></div>
+  </section>
+
+  <section id="sec-date" class="step">
+    <h2 class="sec-title">日期 <span class="req">必填</span></h2>
+    <p class="note">開放 30 天內門診預約。<br>當天已開始的門診無法線上預約。<br>如有需要請來電 <a href="tel:073739496">07-3739496</a>。</p>
+    <div class="card" id="dates"></div>
+  </section>
+
+  <section id="sec-session" class="step">
+    <h2 class="sec-title">時段 <span class="req">必填</span></h2>
+    <p class="note" id="checkin-note"></p>
+    <div class="card" id="sessions"></div>
+  </section>
+
+  <section id="sec-new" class="step" hidden>
+    <h2 class="sec-title">初診資料 <span class="req">必填</span></h2>
+    <div class="card">
+      <div class="field">
+        <label for="idNumber">身分證字號<span class="sub">外籍人士請填居留證號碼或護照號碼</span></label>
+        <input id="idNumber" maxlength="20" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="field"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
+      <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12"></div>
+      <p class="privacy">以上資料僅供本診所看診及預約作業使用，<br>您的個人資料我們會依相關個人資料保護規定妥善保管。</p>
     </div>
-    </div>
   </section>
 
-  <section id="sec-item">
-    <h2>預約項目 <span class="req">必填</span></h2>
-    <div class="grid items" id="items"></div>
+  <section id="sec-note" class="step">
+    <h2 class="sec-title">備註 <span class="opt-tag">選填，可補述就醫原因</span></h2>
+    <div class="card"><textarea id="note" rows="2" maxlength="100" aria-label="備註"></textarea></div>
   </section>
 
-  <section id="sec-other" hidden>
-    <h2>看診目的 <span class="req">必填</span></h2>
-    <div class="field"><input id="otherPurpose" maxlength="40"></div>
+  <section id="sec-preview">
+    <h2 class="sec-title">將傳送的內容</h2>
+    <div class="card"><pre class="preview" id="preview"></pre></div>
   </section>
-
-  <section id="sec-date">
-    <h2>日期 <span class="req">必填</span> <small id="date-note">開放 30 天內門診預約。<br>當天已開始的門診無法線上預約。<br>如有需要請來電 <a class="tel" href="tel:073739496">07-3739496</a>。</small></h2>
-    <div id="dates"></div>
-  </section>
-
-  <section id="sec-session">
-    <h2>時段 <span class="req">必填</span> <small id="checkin-note"></small></h2>
-    <div id="sessions"></div>
-  </section>
-
-  <section id="sec-new" hidden>
-    <h2>初診資料</h2>
-    <div class="field">
-      <label for="idNumber">身分證字號 <span class="req">必填</span><br>（外籍人士請填居留證號碼或護照號碼）</label>
-      <input id="idNumber" maxlength="12">
-      <p class="privacy-note">以上資料僅供本診所看診及預約作業使用，<br>您的個人資料我們會依相關個人資料保護規定妥善保管。</p>
-    </div>
-    <div class="field"><label for="birthday">出生日期 <span class="req">必填</span></label><input id="birthday" type="date"></div>
-    <div class="field"><label for="phone">手機 <span class="req">必填</span></label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="12"></div>
-  </section>
-
-  <section id="sec-note">
-    <h2>備註 <small>選填，可補述就醫原因</small></h2>
-    <div class="field"><textarea id="note" rows="2" maxlength="100"></textarea></div>
-  </section>
-
-  <section>
-    <h2>將傳送的內容</h2>
-    <pre class="preview" id="preview"></pre>
-  </section>
+  <p class="rev">版本 <span id="rev"></span></p>
 </div>
 
 <div class="bar">
   <div class="inner">
-    <a class="send incomplete" id="send" href="#">用 LINE 傳送預約</a>
+    <div class="summary"><span class="tag" id="sumTag">複診</span><span id="sumText">尚未選擇預約項目</span></div>
+    <a class="send incomplete" id="send" href="#">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.6-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
+      用 LINE 傳送預約
+    </a>
     <div class="status" id="status">填寫完成後按上方按鈕</div>
   </div>
 </div>
@@ -272,8 +380,9 @@ if (!location.search.includes('v=')) {
 <script src="holidays.js"></script>
 <script>
 // ===== 設定區 =====
-const LINE_ID = '@muzichengan';
-const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
+const APP_REVISION = '2026-10-15';
+// oaMessage 預填訊息要用官方帳號的「基本 ID」。@muzichengan 是專屬 ID，LINE 官方帳號頁的「聊天」鈕用的也是基本 ID。
+const LINE_ID = '@470bckdv';
 const BOOK_FROM_DAYS = 0;   // 今天也算，當天已開始的時段由 sessionsOn() 自動過濾
 const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
@@ -298,11 +407,13 @@ const ITEMS = [
 const WK = ['日', '一', '二', '三', '四', '五', '六'];
 const st = { isNew: false, item: null, date: null, session: null, tried: false };
 const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function ymd(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function dateLabel(s) { const d = parse(s); return (d.getMonth() + 1) + '月' + d.getDate() + '日（週' + WK[d.getDay()] + '）'; }
 function sessionStarted(s, d) {
   const now = new Date();
   if (ymd(d) !== ymd(now)) return false;
@@ -320,41 +431,83 @@ function days() {
   for (let i = BOOK_FROM_DAYS; i <= BOOK_DAYS; i++) { const d = new Date(t); d.setDate(t.getDate() + i); out.push(d); }
   return out;
 }
-function btn(html, pressed, onClick, extra) {
+function btn(html, pressed, onClick, cls) {
   const b = document.createElement('button');
-  b.type = 'button'; b.className = 'opt' + (extra ? ' ' + extra : ''); b.innerHTML = html;
+  b.type = 'button'; b.className = cls || 'opt'; b.innerHTML = html;
   b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
   b.onclick = onClick;
   return b;
 }
 function hint(text) { const p = document.createElement('div'); p.className = 'hint'; p.textContent = text; return p; }
 
+// 選完後帶到下一個步驟
+function goNext(fromId) {
+  const order = ['sec-item', 'sec-other', 'sec-date', 'sec-session', 'sec-new', 'sec-note'];
+  for (let i = order.indexOf(fromId) + 1; i < order.length; i++) {
+    const el = $(order[i]);
+    if (!el.hidden) {
+      requestAnimationFrame(() => el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }));
+      return;
+    }
+  }
+}
+
 function renderItems() {
   const box = $('items'); box.innerHTML = '';
   ITEMS.forEach(it => box.appendChild(btn('<b>' + (it.label || it.name) + '</b>', st.item === it, () => {
-    if (st.item !== it) { st.item = it; st.date = null; st.session = null; }
+    const changed = st.item !== it;
+    if (changed) { st.item = it; st.date = null; st.session = null; }
     renderAll();
+    if (changed) goNext('sec-item');
   })));
 }
+
 function renderDates() {
   const box = $('dates'); box.innerHTML = '';
   if (!st.item) { box.appendChild(hint('請先選擇預約項目')); return; }
-  const grid = document.createElement('div'); grid.className = 'grid dates';
-  let month = -1;
-  days().forEach(d => {
-    if (!sessionsOn(st.item, d).length) return;
-    if (d.getMonth() !== month) {
-      month = d.getMonth();
-      const m = document.createElement('div'); m.className = 'month'; m.textContent = (month + 1) + ' 月';
-      grid.appendChild(m);
-    }
-    const key = ymd(d);
-    const weekend = d.getDay() === 0 || d.getDay() === 6;
-    grid.appendChild(btn('<b>' + (d.getMonth() + 1) + '/' + d.getDate() + '</b><span>週' + WK[d.getDay()] + '</span>',
-      st.date === key, () => { st.date = key; st.session = null; renderAll(); }, weekend ? 'weekend' : ''));
+  const list = days();
+  const first = list[0], last = list[list.length - 1];
+  const range = document.createElement('p'); range.className = 'cal-range';
+  range.textContent = (first.getMonth() + 1) + '月' + first.getDate() + '日 至 ' + (last.getMonth() + 1) + '月' + last.getDate() + '日';
+  box.appendChild(range);
+
+  const head = document.createElement('div'); head.className = 'cal-head'; head.setAttribute('aria-hidden', 'true');
+  ['一', '二', '三', '四', '五', '六', '日'].forEach((w, i) => {
+    const s = document.createElement('span'); s.textContent = w; if (i >= 5) s.className = 'we'; head.appendChild(s);
   });
-  box.appendChild(grid);
+  box.appendChild(head);
+
+  const cal = document.createElement('div'); cal.className = 'cal';
+  const pad = (first.getDay() + 6) % 7; // 週一開頭
+  for (let i = 0; i < pad; i++) cal.appendChild(document.createElement('span'));
+  const todayKey = ymd(new Date());
+  list.forEach((d, idx) => {
+    const key = ymd(d);
+    const showMonth = idx === 0 || d.getDate() === 1;
+    const label = showMonth ? (d.getMonth() + 1) + '/' + d.getDate() : String(d.getDate());
+    const inner = label + (key === todayKey ? '<small>今天</small>' : '');
+    const cell = document.createElement('div');
+    if (sessionsOn(st.item, d).length) {
+      const b = btn(inner, st.date === key, () => {
+        st.date = key; st.session = null; renderAll(); goNext('sec-date');
+      }, 'day-btn' + (key === todayKey ? ' today' : '') + (showMonth ? ' mo' : ''));
+      b.setAttribute('aria-label', dateLabel(key));
+      cell.appendChild(b);
+    } else {
+      const s = document.createElement('span'); s.className = 'day-off' + (showMonth ? ' mo' : ''); s.innerHTML = inner;
+      s.setAttribute('aria-hidden', 'true');
+      cell.appendChild(s);
+    }
+    cal.appendChild(cell);
+  });
+  box.appendChild(cal);
+
+  const picked = document.createElement('p'); picked.className = 'picked';
+  picked.textContent = st.date ? '已選：' + dateLabel(st.date) : '灰色日期沒有開放這個項目';
+  if (!st.date) picked.style.color = 'var(--label2)', picked.style.fontWeight = '400';
+  box.appendChild(picked);
 }
+
 function checkinNote() {
   if (st.item && st.item.name === '自費點滴') return '自費點滴請於門診結束前 60 分鐘報到';
   return st.isNew ? '初診請於門診結束前 30 分鐘報到' : '複診請於門診結束前 10 分鐘報到';
@@ -365,35 +518,47 @@ function renderSessions() {
   if (!st.date) { box.appendChild(hint('請先選擇日期')); return; }
   const grid = document.createElement('div'); grid.className = 'grid sessions';
   sessionsOn(st.item, parse(st.date)).forEach(s => grid.appendChild(btn('<b>' + S[s] + '</b><span>' + SESSION_TIME[s] + '</span>', st.session === s, () => {
+    const changed = st.session !== s;
     st.session = s; renderAll();
+    if (changed) goNext('sec-session');
   })));
   box.appendChild(grid);
 }
 
 function phoneVal() { return $('phone').value.replace(/[\s-]/g, ''); }
+function idVal() { return $('idNumber').value.replace(/\s/g, '').toUpperCase(); }
+// 身分證與新式居留證（英文字母＋1/2/8/9＋8 碼數字）做檢查碼驗證；其他格式視為舊式居留證或護照
+function idProblem(v) {
+  if (!v) return '請填寫身分證字號（外籍人士填居留證或護照號碼）';
+  if (/^[A-Z][0-9]/.test(v) && v.length === 10) {
+    if (!/^[A-Z][1289]\d{8}$/.test(v)) return '身分證字號格式不對，請再確認';
+    const code = 'ABCDEFGHJKLMNPQRSTUVXYWZIO'.indexOf(v[0]) + 10;
+    let sum = Math.floor(code / 10) + (code % 10) * 9;
+    for (let i = 1; i < 9; i++) sum += Number(v[i]) * (9 - i);
+    sum += Number(v[9]);
+    return sum % 10 === 0 ? '' : '身分證字號好像打錯了，請再確認';
+  }
+  if (!/^[A-Z0-9]{6,20}$/.test(v)) return '證件號碼格式不對，請再確認（只能有英文字母和數字）';
+  return '';
+}
 function birthdayText() {
   const v = $('birthday').value;
   if (!v) return '（未填）';
   const [y, m, d] = v.split('-').map(Number);
   return y + '年' + m + '月' + d + '日\n（民國' + (y - 1911) + '年' + m + '月' + d + '日）';
 }
+function itemText() {
+  if (!st.item) return '';
+  if (!st.item.custom) return st.item.name;
+  return st.item.name + '－' + ($('otherPurpose').value.trim() || '（未填看診目的）');
+}
 function message() {
   const lines = ['【預約】' + (st.isNew ? '初診' : '複診')];
   lines.push('姓名：' + ($('patientName').value.trim() || '（未填）'));
-  let itemLine = st.item ? st.item.name : '（未選）';
-  if (st.item && st.item.custom) {
-    const purpose = $('otherPurpose').value.trim();
-    itemLine += '－' + (purpose || '（未填看診目的）');
-  }
-  lines.push('項目：' + itemLine);
-  if (st.date) {
-    const d = parse(st.date);
-    lines.push('時間：' + (d.getMonth() + 1) + '月' + d.getDate() + '日（週' + WK[d.getDay()] + '）' + (st.session ? S[st.session] : '（未選時段）'));
-  } else {
-    lines.push('時間：（未選）');
-  }
+  lines.push('項目：' + (itemText() || '（未選）'));
+  lines.push('時間：' + (st.date ? dateLabel(st.date) + (st.session ? S[st.session] : '（未選時段）') : '（未選）'));
   if (st.isNew) {
-    lines.push('身分證字號：' + ($('idNumber').value.trim() || '（未填）'));
+    lines.push('身分證字號：' + (idVal() || '（未填）'));
     lines.push('生日：' + birthdayText());
     lines.push('手機：' + (phoneVal() || '（未填）'));
   }
@@ -411,11 +576,31 @@ function missing() {
   if (!st.date) list.push({ sec: 'sec-date', msg: '請選擇日期' });
   if (!st.session) list.push({ sec: 'sec-session', msg: '請選擇時段' });
   if (st.isNew) {
-    if (!$('idNumber').value.trim()) list.push({ sec: 'sec-new', input: 'idNumber', msg: '請填寫身分證字號' });
+    const idp = idProblem(idVal());
+    if (idp) list.push({ sec: 'sec-new', input: 'idNumber', msg: idp });
     if (!$('birthday').value) list.push({ sec: 'sec-new', input: 'birthday', msg: '請填寫出生日期' });
     if (!/^09\d{8}$/.test(phoneVal())) list.push({ sec: 'sec-new', input: 'phone', msg: phoneVal() ? '手機號碼格式不對，請填 09 開頭共 10 碼' : '請填寫手機' });
   }
   return list;
+}
+
+function markDone(miss) {
+  const bad = new Set(miss.map(m => m.sec));
+  const filled = {
+    'sec-type': true,
+    'sec-name': !!$('patientName').value.trim(),
+    'sec-item': !!st.item,
+    'sec-other': !!$('otherPurpose').value.trim(),
+    'sec-date': !!st.date,
+    'sec-session': !!st.session,
+    'sec-new': true,
+    'sec-note': !!$('note').value.trim(),
+  };
+  Object.keys(filled).forEach(id => $(id).classList.toggle('done', filled[id] && !bad.has(id)));
+}
+
+function lineUrl() {
+  return 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(message());
 }
 
 function update() {
@@ -424,6 +609,14 @@ function update() {
   const a = $('send');
   document.querySelectorAll('section.missing').forEach(s => s.classList.remove('missing'));
   ['patientName', 'idNumber', 'birthday', 'phone', 'otherPurpose'].forEach(id => $(id).removeAttribute('aria-invalid'));
+  markDone(miss);
+
+  const parts = [];
+  if (st.item) parts.push(itemText());
+  if (st.date) { const d = parse(st.date); parts.push((d.getMonth() + 1) + '/' + d.getDate() + '（' + WK[d.getDay()] + '）' + (st.session ? S[st.session] : '')); }
+  $('sumTag').textContent = st.isNew ? '初診' : '複診';
+  $('sumText').textContent = parts.length ? parts.join('・') : '尚未選擇預約項目';
+  $('sumText').className = parts.length ? 'ok' : '';
 
   if (miss.length) {
     a.classList.add('incomplete'); a.href = '#';
@@ -432,13 +625,13 @@ function update() {
       $('status').textContent = miss[0].msg + (miss.length > 1 ? '（還有 ' + (miss.length - 1) + ' 項未完成）' : '');
       $('status').className = 'status warn';
     } else {
-      $('status').textContent = '填寫完成後按上方按鈕';
+      $('status').textContent = '還有 ' + miss.length + ' 項未完成';
       $('status').className = 'status';
     }
   } else {
     a.classList.remove('incomplete');
-    a.href = CHAT_URL;
-    $('status').textContent = '按下會複製預約內容並開啟 LINE，請在聊天室貼上後按「傳送」';
+    a.href = lineUrl();
+    $('status').textContent = '開啟 LINE 後內容會自動帶入，記得再按一次「傳送」';
     $('status').className = 'status ready';
   }
 }
@@ -452,43 +645,42 @@ function renderAll() {
   renderItems(); renderDates(); renderSessions(); update();
 }
 
-function copyTextFallback(text) {
+// 備援：送出時同步複製一份預約內容。萬一 LINE 沒有自動帶入，病人長按輸入框貼上即可。
+// 必須在點擊當下同步執行，不能等 Promise，否則 iOS 會把後續開啟 LINE 的動作當成非使用者操作而擋掉。
+function copySync(text) {
   const ta = document.createElement('textarea');
   ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.left = '-9999px';
-  ta.style.top = '0';
+  ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:0;left:-9999px;font-size:16px;';
   document.body.appendChild(ta);
-  ta.focus();
   ta.select();
-  try { document.execCommand('copy'); } catch (e) {}
+  ta.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
   document.body.removeChild(ta);
-}
-function copyText(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
-  }
-  copyTextFallback(text);
-  return Promise.resolve();
+  if (!ok && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
 }
 
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
 $('t-new').onclick = () => { st.isNew = true; renderAll(); };
 ['patientName', 'idNumber', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
 $('birthday').max = ymd(new Date());
+$('rev').textContent = APP_REVISION;
+$('sec-schedule').addEventListener('toggle', e => { $('sched-hint').textContent = e.target.open ? '收合' : '展開'; });
 $('send').addEventListener('click', e => {
   const miss = missing();
-  e.preventDefault();
-  if (miss.length) {
-    st.tried = true;
-    update();
-    const first = miss[0];
-    $(first.sec).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-    if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 300);
+  if (!miss.length) {
+    // 不攔截預設動作，讓連結在使用者點擊的當下直接開啟 LINE（oaMessage 會自動帶入內容）
+    $('send').href = lineUrl();
+    copySync(message());
     return;
   }
-  const go = () => { location.href = CHAT_URL; };
-  copyText(message()).then(go, go);
+  e.preventDefault();
+  st.tried = true;
+  update();
+  const first = miss[0];
+  $(first.sec).scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+  if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 350);
 });
 renderAll();
 </script>
