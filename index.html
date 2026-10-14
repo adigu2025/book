@@ -442,6 +442,26 @@ function renderAll() {
   renderItems(); renderDates(); renderSessions(); update();
 }
 
+function copyTextFallback(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  ta.style.top = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
+  }
+  copyTextFallback(text);
+  return Promise.resolve();
+}
+
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
 $('t-new').onclick = () => { st.isNew = true; renderAll(); };
 ['patientName', 'idNumber', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
@@ -458,11 +478,7 @@ $('send').addEventListener('click', e => {
     return;
   }
   const go = () => { location.href = CHAT_URL; };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(message()).then(go, go);
-  } else {
-    go();
-  }
+  copyText(message()).then(go, go);
 });
 renderAll();
 </script>
