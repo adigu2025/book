@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="zh-Hant-TW">
 <head>
+<script>
+// GitHub Pages 對這個網址下了 Cache-Control: max-age=600，網頁內的 meta 標籤蓋不過伺服器標頭。
+// 沒帶版本參數就立刻用當下時間戳記重新導向一次，確保每次開啟都抓到全新版本，不會卡在 10 分鐘快取裡。
+if (!location.search.includes('v=')) {
+  location.replace(location.pathname + '?v=' + Date.now());
+}
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
