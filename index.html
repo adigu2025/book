@@ -2,11 +2,23 @@
 <html lang="zh-Hant-TW">
 <head>
 <script>
-// GitHub Pages 對這個網址下了 Cache-Control: max-age=600，網頁內的 meta 標籤蓋不過伺服器標頭。
-// 沒帶版本參數就立刻用當下時間戳記重新導向一次，確保每次開啟都抓到全新版本，不會卡在 10 分鐘快取裡。
-if (!location.search.includes('v=')) {
-  location.replace(location.pathname + '?v=' + Date.now());
-}
+(function () {
+  // 在 LINE 自己的內建瀏覽器裡，無法從這個頁面跳回 LINE 聊天室（會跳出「發生不明錯誤」）。
+  // LINE 官方支援 openExternalBrowser=1 參數，會把目前頁面改用手機原生瀏覽器開啟，離開 LINE 內建瀏覽器後，
+  // 「用 LINE 傳送預約」的連結才能正常跳轉回 LINE App。
+  var inLineApp = /\bLine\//.test(navigator.userAgent);
+  var hasEscapeFlag = /[?&]openExternalBrowser=1\b/.test(location.href);
+  if (inLineApp && !hasEscapeFlag) {
+    var sep = location.search ? '&' : '?';
+    location.replace(location.href + sep + 'openExternalBrowser=1');
+    return;
+  }
+  // GitHub Pages 對這個網址下了 Cache-Control: max-age=600，網頁內的 meta 標籤蓋不過伺服器標頭。
+  // 沒帶版本參數就立刻用當下時間戳記重新導向一次，確保每次開啟都抓到全新版本，不會卡在 10 分鐘快取裡。
+  if (!location.search.includes('v=')) {
+    location.replace(location.pathname + '?v=' + Date.now());
+  }
+})();
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
