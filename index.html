@@ -18,28 +18,32 @@ if (!location.search.includes('v=')) {
 <title>木子澄安診所線上預約</title>
 <style>
   /* 版面：iOS 分組清單風格（Apple HIG），單欄步驟卡片，選完自動帶到下一步；日期用月曆；底部固定列顯示已選內容與送出鈕。
-     配色採診所品牌色：Teal（主色、複診）、Gold（強調、送出、初診）、Navy（文字）。 */
+     配色：底色、文字、分隔線用 iOS 系統色；連結與送出用 System Blue；必填與錯誤用 System Red；
+     複診沿用藍鼠、初診沿用桜鼠（前一版的日系色，略加深以確保白字對比）。 */
   :root {
     --bg: #F2F2F7;
     --card: #FFFFFF;
     --fill: rgba(120, 120, 128, .12);
-    --label: #152831;
-    --label2: rgba(21, 40, 49, .64);
-    --label3: rgba(21, 40, 49, .3);
-    --sep: rgba(21, 40, 49, .13);
-    --teal: #3E6A7C;
-    --teal-soft: rgba(62, 106, 124, .12);
-    --gold: #BC7F30;
-    --gold-text: #8F5C1A;
-    --gold-soft: rgba(188, 127, 48, .14);
-    --red: #C2362B;
-    --red-soft: rgba(194, 54, 43, .07);
+    --label: #000000;
+    --label2: rgba(60, 60, 67, .62);
+    --label3: rgba(60, 60, 67, .3);
+    --sep: rgba(60, 60, 67, .2);
+    --blue: #007AFF;
+    --red: #FF3B30;
+    --red-soft: rgba(255, 59, 48, .06);
+    --ret: #5F8696;
+    --ret-text: #4F7584;
+    --ret-soft: rgba(112, 144, 159, .16);
+    --new: #B47A6D;
+    --new-text: #9A6457;
+    --new-soft: rgba(195, 139, 126, .18);
+    --doc-a: #5E9486;
+    --doc-b: #6573A8;
     --on: #FFFFFF;
-    --send-text: #FFFFFF;
-    --shadow: 0 1px 2px rgba(21, 40, 49, .05);
-    --mode: var(--teal);
-    --mode-text: var(--teal);
-    --mode-soft: var(--teal-soft);
+    --shadow: none;
+    --mode: var(--ret);
+    --mode-text: var(--ret-text);
+    --mode-soft: var(--ret-soft);
     --ease: cubic-bezier(.25, .1, .25, 1);
     --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Helvetica Neue", sans-serif;
     color-scheme: light;
@@ -47,20 +51,24 @@ if (!location.search.includes('v=')) {
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #000000; --card: #1C1C1E; --fill: rgba(118, 118, 128, .24);
-      --label: #F2F2F7; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
-      --teal: #7FB0C4; --teal-soft: rgba(127, 176, 196, .18); --gold: #E0A65A; --gold-text: #E0A65A; --gold-soft: rgba(224, 166, 90, .18);
-      --red: #FF6B5E; --red-soft: rgba(255, 107, 94, .12); --on: #0B1A20; --send-text: #1C1C1E; --shadow: none;
+      --label: #FFFFFF; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
+      --blue: #0A84FF; --red: #FF453A; --red-soft: rgba(255, 69, 58, .12);
+      --ret: #8FB3C3; --ret-text: #8FB3C3; --ret-soft: rgba(143, 179, 195, .2);
+      --new: #DDA99C; --new-text: #DDA99C; --new-soft: rgba(221, 169, 156, .2);
+      --doc-a: #4F8476; --doc-b: #5A68A0; --on: #1C1C1E;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #000000; --card: #1C1C1E; --fill: rgba(118, 118, 128, .24);
-    --label: #F2F2F7; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
-    --teal: #7FB0C4; --teal-soft: rgba(127, 176, 196, .18); --gold: #E0A65A; --gold-text: #E0A65A; --gold-soft: rgba(224, 166, 90, .18);
-    --red: #FF6B5E; --red-soft: rgba(255, 107, 94, .12); --on: #0B1A20; --send-text: #1C1C1E; --shadow: none;
+    --label: #FFFFFF; --label2: rgba(235, 235, 245, .62); --label3: rgba(235, 235, 245, .3); --sep: rgba(84, 84, 88, .6);
+    --blue: #0A84FF; --red: #FF453A; --red-soft: rgba(255, 69, 58, .12);
+    --ret: #8FB3C3; --ret-text: #8FB3C3; --ret-soft: rgba(143, 179, 195, .2);
+    --new: #DDA99C; --new-text: #DDA99C; --new-soft: rgba(221, 169, 156, .2);
+    --doc-a: #4F8476; --doc-b: #5A68A0; --on: #1C1C1E;
     color-scheme: dark;
   }
-  body.is-new { --mode: var(--gold); --mode-text: var(--gold-text); --mode-soft: var(--gold-soft); }
+  body.is-new { --mode: var(--new); --mode-text: var(--new-text); --mode-soft: var(--new-soft); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { scroll-padding-top: 12px; -webkit-text-size-adjust: 100%; }
   body {
@@ -72,7 +80,7 @@ if (!location.search.includes('v=')) {
 
   /* 標頭（Large Title） */
   header { padding-top: calc(28px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; }
-  .clinic { font-size: 13px; font-weight: 600; letter-spacing: .12em; color: var(--teal); margin: 0; }
+  .clinic { font-size: 13px; font-weight: 600; letter-spacing: .12em; color: var(--label2); margin: 0; }
   h1 { font-size: 34px; line-height: 1.2; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; letter-spacing: .01em; }
   .tag {
     font-size: 15px; font-weight: 600; padding: 3px 12px; border-radius: 999px;
@@ -101,7 +109,7 @@ if (!location.search.includes('v=')) {
   .sec-title .opt-tag { font-weight: 400; color: var(--label2); font-size: 13px; }
   .req { color: var(--red); font-size: 13px; font-weight: 500; margin-left: auto; }
   .note { font-size: 14px; color: var(--label2); margin: -2px 4px 8px; line-height: 1.55; }
-  .note a { color: var(--teal); font-weight: 600; }
+  .note a { color: var(--blue); font-weight: 600; }
   .card {
     background: var(--card); border-radius: 14px; padding: 14px; box-shadow: var(--shadow);
     transition: box-shadow .2s var(--ease), background .2s var(--ease);
@@ -118,8 +126,8 @@ if (!location.search.includes('v=')) {
   .seg button small { font-size: 13px; font-weight: 400; color: var(--label2); }
   .seg button:active { transform: scale(.97); }
   .seg button[aria-pressed="true"] { background: var(--card); box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); font-weight: 600; }
-  #t-return[aria-pressed="true"] { color: var(--teal); }
-  #t-new[aria-pressed="true"] { color: var(--gold-text); }
+  #t-return[aria-pressed="true"] { color: var(--ret-text); }
+  #t-new[aria-pressed="true"] { color: var(--new-text); }
 
   /* 選項按鈕 */
   .grid { display: grid; gap: 8px; }
@@ -143,7 +151,7 @@ if (!location.search.includes('v=')) {
   .cal-head, .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .cal-head { margin-bottom: 6px; }
   .cal-head span { text-align: center; font-size: 13px; font-weight: 600; color: var(--label3); }
-  .cal-head span.we { color: var(--gold-text); opacity: .8; }
+  .cal-head span.we { color: var(--new-text); opacity: .75; }
   .cal > * { display: flex; justify-content: center; }
   .day-btn, .day-off {
     width: 100%; max-width: 46px; aspect-ratio: 1; border-radius: 50%;
@@ -170,7 +178,7 @@ if (!location.search.includes('v=')) {
     display: flex; align-items: center; gap: 10px;
   }
   details.ref summary::-webkit-details-marker { display: none; }
-  details.ref summary .sym { color: var(--teal); flex: none; }
+  details.ref summary .sym { color: var(--blue); flex: none; }
   details.ref summary .hint-r { margin-left: auto; font-size: 15px; font-weight: 400; color: var(--label2); }
   details.ref summary .chev { color: var(--label3); flex: none; transition: transform .25s var(--ease); }
   details.ref[open] summary .chev { transform: rotate(90deg); }
@@ -183,8 +191,8 @@ if (!location.search.includes('v=')) {
     width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 600;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .dot-a { background: #BC7F30; }
-  .dot-b { background: #3E6A7C; }
+  .dot-a { background: var(--doc-a); }
+  .dot-b { background: var(--doc-b); }
   .schedule-note { color: var(--red); font-weight: 600; font-size: 14px; margin: 12px 0 0; }
   .schedule-legend { display: grid; gap: 4px; margin-top: 8px; font-size: 14px; color: var(--label2); }
   .dot-sm { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
@@ -227,7 +235,7 @@ if (!location.search.includes('v=')) {
   .summary span.ok { color: var(--label); font-weight: 500; }
   .send {
     display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px;
-    text-decoration: none; background: var(--gold); color: var(--send-text);
+    text-decoration: none; background: var(--blue); color: #FFFFFF;
     font-weight: 700; padding: 12px 20px; border-radius: 999px; font-size: 19px; letter-spacing: .04em;
     touch-action: manipulation; transition: transform .1s var(--ease), opacity .2s var(--ease);
   }
