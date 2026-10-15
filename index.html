@@ -518,13 +518,13 @@ function renderDates() {
   box.appendChild(range);
 
   const head = document.createElement('div'); head.className = 'cal-head'; head.setAttribute('aria-hidden', 'true');
-  ['一', '二', '三', '四', '五', '六', '日'].forEach((w, i) => {
-    const s = document.createElement('span'); s.textContent = w; if (i >= 5) s.className = 'we'; head.appendChild(s);
+  ['日', '一', '二', '三', '四', '五', '六'].forEach((w, i) => {
+    const s = document.createElement('span'); s.textContent = w; if (i === 0 || i === 6) s.className = 'we'; head.appendChild(s);
   });
   box.appendChild(head);
 
   const cal = document.createElement('div'); cal.className = 'cal';
-  const pad = (first.getDay() + 6) % 7; // 週一開頭
+  const pad = first.getDay(); // 週日開頭
   for (let i = 0; i < pad; i++) cal.appendChild(document.createElement('span'));
   const todayKey = ymd(new Date());
   list.forEach((d, idx) => {
