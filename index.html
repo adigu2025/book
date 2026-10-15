@@ -18,7 +18,7 @@ if (!location.search.includes('v=')) {
 <title>木子澄安診所線上預約</title>
 <style>
   /* 版面：iOS 分組清單風格（Apple HIG），單欄步驟卡片，選完自動帶到下一步；日期用月曆；底部固定列顯示已選內容與送出鈕。
-     配色：底色、文字、分隔線用 iOS 系統色；連結與送出用 System Blue；必填與錯誤用 System Red；
+     配色：底色、文字、分隔線用 iOS 系統色；連結用 System Blue；必填與錯誤用 System Red；送出鈕（柿色）與門診時刻表醫師代表色沿用 10/14 版本；
      複診沿用藍鼠、初診沿用桜鼠（前一版的日系色，略加深以確保白字對比）。 */
   :root {
     --bg: #F2F2F7;
@@ -37,8 +37,11 @@ if (!location.search.includes('v=')) {
     --new: #B47A6D;
     --new-text: #9A6457;
     --new-soft: rgba(195, 139, 126, .18);
-    --doc-a: #5E9486;
-    --doc-b: #6573A8;
+    --doc-a: #70909F;
+    --doc-b: #7C8A5A;
+    --send: #A8623A;
+    --send-text: #FFF8EF;
+    --sched-note: #A8503B;
     --on: #FFFFFF;
     --shadow: none;
     --mode: var(--ret);
@@ -55,7 +58,7 @@ if (!location.search.includes('v=')) {
       --blue: #0A84FF; --red: #FF453A; --red-soft: rgba(255, 69, 58, .12);
       --ret: #8FB3C3; --ret-text: #8FB3C3; --ret-soft: rgba(143, 179, 195, .2);
       --new: #DDA99C; --new-text: #DDA99C; --new-soft: rgba(221, 169, 156, .2);
-      --doc-a: #4F8476; --doc-b: #5A68A0; --on: #1C1C1E;
+      --doc-a: #9CB9C6; --doc-b: #A8B584; --send: #D98A52; --send-text: #2A1D10; --sched-note: #D98468; --on: #1C1C1E;
       color-scheme: dark;
     }
   }
@@ -65,7 +68,7 @@ if (!location.search.includes('v=')) {
     --blue: #0A84FF; --red: #FF453A; --red-soft: rgba(255, 69, 58, .12);
     --ret: #8FB3C3; --ret-text: #8FB3C3; --ret-soft: rgba(143, 179, 195, .2);
     --new: #DDA99C; --new-text: #DDA99C; --new-soft: rgba(221, 169, 156, .2);
-    --doc-a: #4F8476; --doc-b: #5A68A0; --on: #1C1C1E;
+    --doc-a: #9CB9C6; --doc-b: #A8B584; --send: #D98A52; --send-text: #2A1D10; --sched-note: #D98468; --on: #1C1C1E;
     color-scheme: dark;
   }
   body.is-new { --mode: var(--new); --mode-text: var(--new-text); --mode-soft: var(--new-soft); }
@@ -193,7 +196,7 @@ if (!location.search.includes('v=')) {
   }
   .dot-a { background: var(--doc-a); }
   .dot-b { background: var(--doc-b); }
-  .schedule-note { color: var(--red); font-weight: 600; font-size: 14px; margin: 12px 0 0; }
+  .schedule-note { color: var(--sched-note); font-weight: 600; font-size: 14px; margin: 12px 0 0; }
   .schedule-legend { display: grid; gap: 4px; margin-top: 8px; font-size: 14px; color: var(--label2); }
   .dot-sm { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
 
@@ -233,19 +236,19 @@ if (!location.search.includes('v=')) {
   .summary .tag { font-size: 13px; padding: 1px 9px; flex: none; }
   .summary span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; color: var(--label2); }
   .summary span.ok { color: var(--label); font-weight: 500; }
+  /* 送出鈕與說明文字沿用 10/14 版本的外觀 */
   .send {
-    display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px;
-    text-decoration: none; background: var(--blue); color: #FFFFFF;
-    font-weight: 700; padding: 12px 20px; border-radius: 999px; font-size: 19px; letter-spacing: .04em;
-    touch-action: manipulation; transition: transform .1s var(--ease), opacity .2s var(--ease);
+    display: block; text-align: center; text-decoration: none; background: var(--send); color: var(--send-text);
+    font-weight: 600; padding: 15px; border-radius: 14px; font-size: 19px; letter-spacing: .06em;
+    touch-action: manipulation; transition: transform .1s;
   }
   .send:not(.incomplete):active { transform: scale(.98); }
-  .send.incomplete { opacity: .45; }
-  .status { font-size: 14px; color: var(--label2); text-align: center; min-height: 1.2em; line-height: 1.45; }
+  .send.incomplete { opacity: .55; }
+  .status { font-size: 15px; color: var(--label2); text-align: center; min-height: 1.2em; }
   .status.warn { color: var(--red); font-weight: 600; }
   .status.ready {
     font-size: 16px; font-weight: 700; color: var(--mode-text); background: var(--mode-soft);
-    border-radius: 10px; padding: 8px 10px;
+    border-radius: 10px; padding: 8px 10px; line-height: 1.4;
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before { transition: none !important; }
@@ -377,10 +380,7 @@ if (!location.search.includes('v=')) {
 <div class="bar">
   <div class="inner">
     <div class="summary"><span class="tag" id="sumTag">複診</span><span id="sumText">尚未選擇預約項目</span></div>
-    <a class="send incomplete" id="send" href="#">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.6-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
-      用 LINE 傳送預約
-    </a>
+    <a class="send incomplete" id="send" href="#">用 LINE 傳送預約</a>
     <div class="status" id="status">填寫完成後按上方按鈕</div>
   </div>
 </div>
@@ -389,8 +389,8 @@ if (!location.search.includes('v=')) {
 <script>
 // ===== 設定區 =====
 const APP_REVISION = '2026-10-15';
-// oaMessage 預填訊息要用官方帳號的「基本 ID」。@muzichengan 是專屬 ID，LINE 官方帳號頁的「聊天」鈕用的也是基本 ID。
-const LINE_ID = '@470bckdv';
+const LINE_ID = '@muzichengan';
+const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
 const BOOK_FROM_DAYS = 0;   // 今天也算，當天已開始的時段由 sessionsOn() 自動過濾
 const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
@@ -607,10 +607,6 @@ function markDone(miss) {
   Object.keys(filled).forEach(id => $(id).classList.toggle('done', filled[id] && !bad.has(id)));
 }
 
-function lineUrl() {
-  return 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(message());
-}
-
 function update() {
   $('preview').textContent = message();
   const miss = missing();
@@ -633,13 +629,13 @@ function update() {
       $('status').textContent = miss[0].msg + (miss.length > 1 ? '（還有 ' + (miss.length - 1) + ' 項未完成）' : '');
       $('status').className = 'status warn';
     } else {
-      $('status').textContent = '還有 ' + miss.length + ' 項未完成';
+      $('status').textContent = '填寫完成後按上方按鈕';
       $('status').className = 'status';
     }
   } else {
     a.classList.remove('incomplete');
-    a.href = lineUrl();
-    $('status').textContent = '開啟 LINE 後內容會自動帶入，記得再按一次「傳送」';
+    a.href = CHAT_URL;
+    $('status').textContent = '按下會複製預約內容並開啟 LINE，請在聊天室貼上後按「傳送」';
     $('status').className = 'status ready';
   }
 }
@@ -653,20 +649,25 @@ function renderAll() {
   renderItems(); renderDates(); renderSessions(); update();
 }
 
-// 備援：送出時同步複製一份預約內容。萬一 LINE 沒有自動帶入，病人長按輸入框貼上即可。
-// 必須在點擊當下同步執行，不能等 Promise，否則 iOS 會把後續開啟 LINE 的動作當成非使用者操作而擋掉。
-function copySync(text) {
+// 送出流程沿用 10/14 版本：先複製預約內容，再開啟 LINE 聊天室讓病人貼上
+function copyTextFallback(text) {
   const ta = document.createElement('textarea');
   ta.value = text;
-  ta.setAttribute('readonly', '');
-  ta.style.cssText = 'position:fixed;top:0;left:-9999px;font-size:16px;';
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  ta.style.top = '0';
   document.body.appendChild(ta);
+  ta.focus();
   ta.select();
-  ta.setSelectionRange(0, text.length);
-  let ok = false;
-  try { ok = document.execCommand('copy'); } catch (e) {}
+  try { document.execCommand('copy'); } catch (e) {}
   document.body.removeChild(ta);
-  if (!ok && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
+}
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
+  }
+  copyTextFallback(text);
+  return Promise.resolve();
 }
 
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
@@ -677,18 +678,17 @@ $('rev').textContent = APP_REVISION;
 $('sec-schedule').addEventListener('toggle', e => { $('sched-hint').textContent = e.target.open ? '收合' : '展開'; });
 $('send').addEventListener('click', e => {
   const miss = missing();
-  if (!miss.length) {
-    // 不攔截預設動作，讓連結在使用者點擊的當下直接開啟 LINE（oaMessage 會自動帶入內容）
-    $('send').href = lineUrl();
-    copySync(message());
+  e.preventDefault();
+  if (miss.length) {
+    st.tried = true;
+    update();
+    const first = miss[0];
+    $(first.sec).scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 350);
     return;
   }
-  e.preventDefault();
-  st.tried = true;
-  update();
-  const first = miss[0];
-  $(first.sec).scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-  if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 350);
+  const go = () => { location.href = CHAT_URL; };
+  copyText(message()).then(go, go);
 });
 renderAll();
 </script>
