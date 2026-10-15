@@ -73,13 +73,26 @@ if (!location.search.includes('v=')) {
   }
   body.is-new { --mode: var(--new); --mode-text: var(--new-text); --mode-soft: var(--new-soft); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { scroll-padding-top: 12px; -webkit-text-size-adjust: 100%; }
+  html { scroll-padding-top: 64px; -webkit-text-size-adjust: 100%; }
   body {
     background: var(--bg); color: var(--label); font-family: var(--font);
     font-size: 17px; line-height: 1.5; margin: 0; counter-reset: step;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 210px; display: grid; gap: 24px; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 210px; display: grid; gap: 30px; }
+
+  /* 精簡標題列：大標題捲出畫面後出現（iOS 大標題收合） */
+  .navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    padding: calc(11px + env(safe-area-inset-top, 0px)) 16px 11px;
+    background: var(--bg); border-bottom: .5px solid var(--sep);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 17px; font-weight: 600;
+    opacity: 0; transform: translateY(-6px); pointer-events: none;
+    transition: opacity .25s var(--ease), transform .25s var(--ease);
+  }
+  .navbar.show { opacity: 1; transform: none; }
+  .navbar .tag { font-size: 13px; padding: 1px 9px; }
 
   /* 標頭（Large Title） */
   header { padding-top: calc(28px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; }
@@ -98,20 +111,20 @@ if (!location.search.includes('v=')) {
 
   /* 步驟：標題在卡片外（iOS 分組清單的區段標頭） */
   .sec-title {
-    font-size: 15px; font-weight: 600; color: var(--label2); margin: 0 4px 8px;
-    display: flex; align-items: center; gap: 8px;
+    font-size: 17px; font-weight: 600; color: var(--label); margin: 0 4px 10px;
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; letter-spacing: .01em;
   }
   .step > .sec-title::before {
     counter-increment: step; content: counter(step);
-    width: 22px; height: 22px; border-radius: 50%; flex: none;
+    width: 24px; height: 24px; border-radius: 50%; flex: none; align-self: center;
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--mode-soft); color: var(--mode-text); font-size: 13px; font-weight: 700;
     transition: background .2s var(--ease), color .2s var(--ease);
   }
   .step.done > .sec-title::before { content: "✓"; background: var(--mode); color: var(--on); }
-  .sec-title .opt-tag { font-weight: 400; color: var(--label2); font-size: 13px; }
-  .req { color: var(--red); font-size: 13px; font-weight: 500; margin-left: auto; }
-  .note { font-size: 14px; color: var(--label2); margin: -2px 4px 8px; line-height: 1.55; }
+  .sec-title .opt-tag { font-weight: 400; color: var(--label2); font-size: 14px; }
+  .req { color: var(--sched-note); font-size: 14px; font-weight: 400; }
+  .note { font-size: 14px; color: var(--label2); margin: -4px 4px 10px; line-height: 1.55; }
   .note a { color: var(--blue); font-weight: 600; }
   .card {
     background: var(--card); border-radius: 14px; padding: 14px; box-shadow: var(--shadow);
@@ -150,9 +163,9 @@ if (!location.search.includes('v=')) {
   :is(.opt, .day-btn, .seg button, input, textarea, .send, summary):focus-visible { outline: 3px solid var(--mode-soft); outline-offset: 2px; box-shadow: 0 0 0 2px var(--mode); }
 
   /* 月曆 */
-  .cal-range { font-size: 15px; font-weight: 600; margin: 0 0 10px; }
+  .cal-range { font-size: 17px; font-weight: 600; margin: 0 0 12px; }
   .cal-head, .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-  .cal-head { margin-bottom: 6px; }
+  .cal-head { margin-bottom: 6px; padding-bottom: 6px; border-bottom: .5px solid var(--sep); }
   .cal-head span { text-align: center; font-size: 13px; font-weight: 600; color: var(--label3); }
   .cal-head span.we { color: var(--new-text); opacity: .75; }
   .cal > * { display: flex; justify-content: center; }
@@ -162,14 +175,14 @@ if (!location.search.includes('v=')) {
     font: inherit; font-size: 17px; line-height: 1.05; padding: 0;
   }
   .day-btn {
-    border: 0; background: transparent; color: var(--label); cursor: pointer; font-weight: 500;
+    border: 0; background: transparent; color: var(--label); cursor: pointer; font-weight: 600;
     touch-action: manipulation; transition: background .2s var(--ease), color .2s var(--ease), transform .1s var(--ease);
   }
-  .day-btn:not([aria-pressed="true"]) { background: var(--fill); }
+  @media (hover: hover) { .day-btn:not([aria-pressed="true"]):hover { background: var(--fill); } }
   .day-btn:active { transform: scale(.92); }
   .day-btn.today { color: var(--mode-text); font-weight: 700; }
   .day-btn[aria-pressed="true"] { background: var(--mode); color: var(--on); font-weight: 700; }
-  .day-off { color: var(--label3); }
+  .day-off { color: var(--label3); font-weight: 400; }
   .day-btn small, .day-off small { font-size: 9px; letter-spacing: 0; font-weight: 600; }
   .day-btn.mo, .day-off.mo { font-size: 13px; }
   .picked { margin: 12px 0 0; font-size: 15px; color: var(--mode-text); font-weight: 600; min-height: 1.5em; }
@@ -181,7 +194,7 @@ if (!location.search.includes('v=')) {
     display: flex; align-items: center; gap: 10px;
   }
   details.ref summary::-webkit-details-marker { display: none; }
-  details.ref summary .sym { color: var(--blue); flex: none; }
+  details.ref summary .sym { flex: none; width: 30px; height: 30px; border-radius: 8px; background: var(--blue); color: #FFFFFF; display: grid; place-items: center; }
   details.ref summary .hint-r { margin-left: auto; font-size: 15px; font-weight: 400; color: var(--label2); }
   details.ref summary .chev { color: var(--label3); flex: none; transition: transform .25s var(--ease); }
   details.ref[open] summary .chev { transform: rotate(90deg); }
@@ -219,10 +232,15 @@ if (!location.search.includes('v=')) {
   input:focus, textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--mode); }
   input[aria-invalid="true"] { box-shadow: 0 0 0 2px var(--red); }
   #idNumber { text-transform: uppercase; letter-spacing: .06em; }
+  /* 傳送內容預覽：訊息泡泡 */
+  .bubble-wrap { display: flex; justify-content: flex-end; padding-right: 4px; }
   pre.preview {
-    white-space: pre-wrap; word-break: break-word; margin: 0; font-family: var(--font); font-size: 16px; line-height: 1.6;
-    border-left: 3px solid var(--mode); padding: 2px 0 2px 12px;
+    position: relative; white-space: pre-wrap; word-break: break-word; margin: 0; font-family: var(--font);
+    font-size: 16px; line-height: 1.55; max-width: 90%;
+    background: var(--mode); color: var(--on); border-radius: 20px 20px 6px 20px; padding: 10px 14px;
+    transition: background .2s var(--ease);
   }
+  .bubble-meta { font-size: 13px; color: var(--label2); text-align: right; margin: 8px 4px 0; }
   .rev { font-size: 12px; color: var(--label3); margin: -8px 4px 0; }
 
   /* 底部送出列 */
@@ -256,6 +274,7 @@ if (!location.search.includes('v=')) {
 </style>
 </head>
 <body>
+<div class="navbar" id="navbar" aria-hidden="true">線上預約 <span class="tag" id="navTag">複診</span></div>
 <div class="wrap">
   <header>
     <p class="clinic">木子澄安診所</p>
@@ -285,7 +304,7 @@ if (!location.search.includes('v=')) {
 
   <details class="ref" id="sec-schedule">
     <summary>
-      <svg class="sym" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+      <span class="sym"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>
       醫師門診時刻表
       <span class="hint-r" id="sched-hint">展開</span>
       <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
@@ -372,7 +391,7 @@ if (!location.search.includes('v=')) {
 
   <section id="sec-preview">
     <h2 class="sec-title">將傳送的內容</h2>
-    <div class="card"><pre class="preview" id="preview"></pre></div>
+    <div class="card"><div class="bubble-wrap"><pre class="preview" id="preview"></pre></div><p class="bubble-meta">按下傳送鈕後，請在 LINE 聊天室貼上這段內容</p></div>
   </section>
   <p class="rev">版本 <span id="rev"></span></p>
 </div>
@@ -566,7 +585,7 @@ function message() {
   lines.push('項目：' + (itemText() || '（未選）'));
   lines.push('時間：' + (st.date ? dateLabel(st.date) + (st.session ? S[st.session] : '（未選時段）') : '（未選）'));
   if (st.isNew) {
-    lines.push('身分證字號：' + (idVal() || '（未填）'));
+    lines.push('ＩＤ：' + (idVal() || '（未填）'));
     lines.push('生日：' + birthdayText());
     lines.push('手機：' + (phoneVal() || '（未填）'));
   }
@@ -643,7 +662,7 @@ function renderAll() {
   document.body.classList.toggle('is-new', st.isNew);
   $('t-return').setAttribute('aria-pressed', st.isNew ? 'false' : 'true');
   $('t-new').setAttribute('aria-pressed', st.isNew ? 'true' : 'false');
-  $('tag').textContent = st.isNew ? '初診' : '複診';
+  $('tag').textContent = $('navTag').textContent = st.isNew ? '初診' : '複診';
   $('sec-new').hidden = !st.isNew;
   $('sec-other').hidden = !(st.item && st.item.custom);
   renderItems(); renderDates(); renderSessions(); update();
@@ -690,6 +709,10 @@ $('send').addEventListener('click', e => {
   const go = () => { location.href = CHAT_URL; };
   copyText(message()).then(go, go);
 });
+// 大標題捲出畫面後顯示精簡標題列
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver(([e]) => $('navbar').classList.toggle('show', !e.isIntersecting)).observe(document.querySelector('h1'));
+}
 renderAll();
 </script>
 </body>
