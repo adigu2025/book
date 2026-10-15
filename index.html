@@ -150,16 +150,23 @@ if (!location.search.includes('v=')) {
   .items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sessions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .opt {
-    background: var(--fill); color: var(--label); border: 0; border-radius: 12px;
-    min-height: 50px; padding: 11px 6px; font: inherit; cursor: pointer; text-align: center; min-width: 0;
-    touch-action: manipulation; transition: background .2s var(--ease), color .2s var(--ease), transform .1s var(--ease);
+    position: relative; background: var(--fill); color: var(--label); border: 0; border-radius: 12px;
+    min-height: 52px; padding: 11px 8px; font: inherit; cursor: pointer; text-align: center; min-width: 0;
+    touch-action: manipulation;
+    transition: background .2s var(--ease), color .2s var(--ease), box-shadow .2s var(--ease), transform .1s var(--ease);
   }
   .opt:active { transform: scale(.96); }
   .opt b { display: block; font-weight: 500; }
   .opt span { display: block; font-size: 13px; color: var(--label2); }
-  .opt[aria-pressed="true"] { background: var(--mode); color: var(--on); }
+  /* 選取：同色系淺底＋細框＋右上角勾選，比整塊實色柔和 */
+  .opt[aria-pressed="true"] { background: var(--mode-soft); color: var(--mode-text); box-shadow: inset 0 0 0 1.5px var(--mode); }
   .opt[aria-pressed="true"] b { font-weight: 600; }
-  .opt[aria-pressed="true"] span { color: var(--on); opacity: .9; }
+  .opt[aria-pressed="true"] span { color: var(--mode-text); }
+  .opt[aria-pressed="true"]::after {
+    content: "✓"; position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--mode); color: var(--on); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center;
+    box-shadow: 0 0 0 2px var(--card);
+  }
   :is(.opt, .day-btn, .seg button, input, textarea, .send, summary):focus-visible { outline: 3px solid var(--mode-soft); outline-offset: 2px; box-shadow: 0 0 0 2px var(--mode); }
 
   /* 月曆 */
@@ -194,7 +201,7 @@ if (!location.search.includes('v=')) {
     display: flex; align-items: center; gap: 10px;
   }
   details.ref summary::-webkit-details-marker { display: none; }
-  details.ref summary .sym { flex: none; width: 30px; height: 30px; border-radius: 8px; background: var(--blue); color: #FFFFFF; display: grid; place-items: center; }
+  details.ref summary .sym { flex: none; width: 30px; height: 30px; border-radius: 8px; background: var(--fill); color: var(--label2); display: grid; place-items: center; }
   details.ref summary .hint-r { margin-left: auto; font-size: 15px; font-weight: 400; color: var(--label2); }
   details.ref summary .chev { color: var(--label3); flex: none; transition: transform .25s var(--ease); }
   details.ref[open] summary .chev { transform: rotate(90deg); }
@@ -232,12 +239,23 @@ if (!location.search.includes('v=')) {
   input:focus, textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--mode); }
   input[aria-invalid="true"] { box-shadow: 0 0 0 2px var(--red); }
   #idNumber { text-transform: uppercase; letter-spacing: .06em; }
+  /* 初診資料：iOS 分組清單列（左標籤、右輸入，列間內縮分隔線） */
+  .card.rows { padding: 0; overflow: hidden; }
+  .row { position: relative; display: grid; grid-template-columns: 6em minmax(0, 1fr); align-items: center; gap: 8px; min-height: 54px; padding: 0 16px; }
+  .row + .row::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: .5px solid var(--sep); }
+  .row label { font-size: 17px; color: var(--label); }
+  .row input { background: transparent; border-radius: 0; padding: 14px 0; min-height: 54px; }
+  .row input:focus { box-shadow: none; }
+  .row:focus-within { background: var(--mode-soft); }
+  .row:has(input[aria-invalid="true"]) label { color: var(--red); }
+  .row input[aria-invalid="true"] { box-shadow: none; }
+  .foot { font-size: 13px; line-height: 1.6; color: var(--label2); margin: 8px 4px 0; }
   /* 傳送內容預覽：訊息泡泡 */
   .bubble-wrap { display: flex; justify-content: flex-end; padding-right: 4px; }
   pre.preview {
     position: relative; white-space: pre-wrap; word-break: break-word; margin: 0; font-family: var(--font);
     font-size: 16px; line-height: 1.55; max-width: 90%;
-    background: var(--mode); color: var(--on); border-radius: 20px 20px 6px 20px; padding: 10px 14px;
+    background: var(--mode-soft); color: var(--label); border-radius: 20px 20px 6px 20px; padding: 10px 14px;
     transition: background .2s var(--ease);
   }
   .bubble-meta { font-size: 13px; color: var(--label2); text-align: right; margin: 8px 4px 0; }
@@ -373,15 +391,16 @@ if (!location.search.includes('v=')) {
 
   <section id="sec-new" class="step" hidden>
     <h2 class="sec-title">初診資料 <span class="req">必填</span></h2>
-    <div class="card">
-      <div class="field">
-        <label for="idNumber">身分證字號<span class="sub">外籍人士請填居留證號碼或護照號碼</span></label>
+    <div class="card rows">
+      <div class="row">
+        <label for="idNumber">身分證字號</label>
         <input id="idNumber" maxlength="20" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false">
       </div>
-      <div class="field"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
-      <div class="field"><label for="phone">手機</label><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12"></div>
-      <p class="privacy">以上資料僅供本診所看診及預約作業使用，<br>您的個人資料我們會依相關個人資料保護規定妥善保管。</p>
+      <div class="row"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
+      <div class="row"><label for="phone">手機</label><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12"></div>
     </div>
+    <p class="foot">外籍人士請填居留證號碼或護照號碼。</p>
+    <p class="foot">以上資料僅供本診所看診及預約作業使用，<br>您的個人資料我們會依相關個人資料保護規定妥善保管。</p>
   </section>
 
   <section id="sec-note" class="step">
