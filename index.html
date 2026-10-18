@@ -286,6 +286,7 @@ if (!location.search.includes('v=')) {
     font-size: 16px; font-weight: 700; color: var(--mode-text); background: var(--mode-soft);
     border-radius: 10px; padding: 8px 10px; line-height: 1.4;
   }
+  .fallback { display: block; text-align: center; font-size: 14px; color: var(--label2); text-decoration: underline; line-height: 1.4; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before { transition: none !important; }
   }
@@ -410,7 +411,7 @@ if (!location.search.includes('v=')) {
 
   <section id="sec-preview">
     <h2 class="sec-title">將傳送的內容</h2>
-    <div class="card"><div class="bubble-wrap"><pre class="preview" id="preview"></pre></div><p class="bubble-meta">按下傳送鈕後，請在 LINE 聊天室貼上這段內容</p></div>
+    <div class="card"><div class="bubble-wrap"><pre class="preview" id="preview"></pre></div><p class="bubble-meta">按下傳送鈕後，這段內容會自動帶入 LINE 輸入框</p></div>
   </section>
   <p class="rev">版本 <span id="rev"></span></p>
 </div>
@@ -420,15 +421,17 @@ if (!location.search.includes('v=')) {
     <div class="summary"><span class="tag" id="sumTag">複診</span><span id="sumText">尚未選擇預約項目</span></div>
     <a class="send incomplete" id="send" href="#">用 LINE 傳送預約</a>
     <div class="status" id="status">填寫完成後按上方按鈕</div>
+    <a class="fallback" id="fallback" href="#" hidden>LINE 若顯示錯誤，點這裡開啟聊天室，長按輸入框「貼上」</a>
   </div>
 </div>
 
 <script src="holidays.js"></script>
 <script>
 // ===== 設定區 =====
-const APP_REVISION = '2026-10-15';
+const APP_REVISION = '2026-10-18';
 const LINE_ID = '@muzichengan';
 const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
+const oaMessageUrl = text => 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(text);
 const BOOK_FROM_DAYS = 0;   // 今天也算，當天已開始的時段由 sessionsOn() 自動過濾
 const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
@@ -660,6 +663,7 @@ function update() {
   $('sumText').textContent = parts.length ? parts.join('・') : '尚未選擇預約項目';
   $('sumText').className = parts.length ? 'ok' : '';
 
+  $('fallback').hidden = !!miss.length;
   if (miss.length) {
     a.classList.add('incomplete'); a.href = '#';
     if (st.tried) {
@@ -672,8 +676,9 @@ function update() {
     }
   } else {
     a.classList.remove('incomplete');
-    a.href = CHAT_URL;
-    $('status').textContent = '按下會複製預約內容並開啟 LINE，請在聊天室貼上後按「傳送」';
+    a.href = oaMessageUrl(message());
+    $('fallback').href = CHAT_URL;
+    $('status').textContent = '按下後會開啟 LINE 並自動帶入預約內容，再按一次「傳送」即完成';
     $('status').className = 'status ready';
   }
 }
@@ -687,7 +692,7 @@ function renderAll() {
   renderItems(); renderDates(); renderSessions(); update();
 }
 
-// 送出流程沿用 10/14 版本：先複製預約內容，再開啟 LINE 聊天室讓病人貼上
+// 送出時一律先把預約內容複製到剪貼簿，oaMessage 帶入失敗時病人仍可到聊天室貼上
 function copyTextFallback(text) {
   const ta = document.createElement('textarea');
   ta.value = text;
@@ -697,15 +702,14 @@ function copyTextFallback(text) {
   document.body.appendChild(ta);
   ta.focus();
   ta.select();
+  ta.setSelectionRange(0, text.length);
   try { document.execCommand('copy'); } catch (e) {}
   document.body.removeChild(ta);
 }
-function copyText(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
-  }
+// 同步複製，不擋住接下來的原生連結跳轉
+function copyNow(text) {
   copyTextFallback(text);
-  return Promise.resolve();
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
 }
 
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
@@ -716,8 +720,8 @@ $('rev').textContent = APP_REVISION;
 $('sec-schedule').addEventListener('toggle', e => { $('sched-hint').textContent = e.target.open ? '收合' : '展開'; });
 $('send').addEventListener('click', e => {
   const miss = missing();
-  e.preventDefault();
   if (miss.length) {
+    e.preventDefault();
     st.tried = true;
     update();
     const first = miss[0];
@@ -725,9 +729,10 @@ $('send').addEventListener('click', e => {
     if (first.input) setTimeout(() => $(first.input).focus({ preventScroll: true }), 350);
     return;
   }
-  const go = () => { location.href = CHAT_URL; };
-  copyText(message()).then(go, go);
+  // 不攔截預設行為：由連結本身跳到 oaMessage，LINE 會把內容帶入輸入框
+  copyNow(message());
 });
+$('fallback').addEventListener('click', () => copyNow(message()));
 // 大標題捲出畫面後顯示精簡標題列
 if ('IntersectionObserver' in window) {
   new IntersectionObserver(([e]) => $('navbar').classList.toggle('show', !e.isIntersecting)).observe(document.querySelector('h1'));
