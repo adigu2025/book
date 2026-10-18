@@ -262,6 +262,8 @@ if (!location.search.includes('v=')) {
   .rev { font-size: 12px; color: var(--label3); margin: -8px 4px 0; }
 
   /* 底部送出列 */
+  /* 輸入中隱藏底部送出列，避免鍵盤彈出時送出列浮上來擋住正在填的欄位 */
+  body.typing .bar { display: none; }
   .bar {
     position: fixed; left: 0; right: 0; bottom: 0; background: var(--card);
     border-top: .5px solid var(--sep);
@@ -733,6 +735,12 @@ $('send').addEventListener('click', e => {
   copyNow(message());
 });
 $('fallback').addEventListener('click', () => copyNow(message()));
+// 換欄位時 focusout 會先於下一個 focusin 觸發，延後判斷避免送出列閃一下
+const isField = el => el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type !== 'button'));
+document.addEventListener('focusin', e => { if (isField(e.target)) document.body.classList.add('typing'); });
+document.addEventListener('focusout', () => setTimeout(() => {
+  document.body.classList.toggle('typing', isField(document.activeElement));
+}, 100));
 // 大標題捲出畫面後顯示精簡標題列
 if ('IntersectionObserver' in window) {
   new IntersectionObserver(([e]) => $('navbar').classList.toggle('show', !e.isIntersecting)).observe(document.querySelector('h1'));
