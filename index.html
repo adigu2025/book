@@ -79,7 +79,7 @@ if (!location.search.includes('v=')) {
     font-size: 17px; line-height: 1.5; margin: 0; counter-reset: step;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 210px; display: grid; gap: 30px; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 180px; display: grid; gap: 30px; }
 
   /* 精簡標題列：大標題捲出畫面後出現（iOS 大標題收合） */
   .navbar {
@@ -247,7 +247,16 @@ if (!location.search.includes('v=')) {
   .row input { background: transparent; border-radius: 0; padding: 14px 0; min-height: 54px; }
   .row input:focus { box-shadow: none; }
   .row:focus-within { background: var(--mode-soft); }
-  .row:has(input[aria-invalid="true"]) label { color: var(--red); }
+  .row:has([aria-invalid="true"]) label { color: var(--red); }
+  /* 出生日期：年月日三個下拉選單，年份用民國年 */
+  .bday { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 8px 0; }
+  .bday span { flex: none; color: var(--label2); font-size: 15px; }
+  .bday select {
+    min-width: 0; flex: 1 1 0; height: 38px; font: inherit; font-size: 17px; color: var(--label); text-align: center;
+    background: var(--fill); border: 0; border-radius: 8px; padding: 0 4px; -webkit-appearance: none; appearance: none;
+  }
+  .bday #bY { flex-grow: 1.3; }
+  .bday[aria-invalid="true"] select { box-shadow: 0 0 0 2px var(--red); }
   .row input[aria-invalid="true"] { box-shadow: none; }
   .foot { font-size: 13px; line-height: 1.6; color: var(--label2); margin: 8px 4px 0; }
   /* 傳送內容預覽：訊息泡泡 */
@@ -284,10 +293,7 @@ if (!location.search.includes('v=')) {
   .send.incomplete { opacity: .55; }
   .status { font-size: 15px; color: var(--label2); text-align: center; min-height: 1.2em; }
   .status.warn { color: var(--red); font-weight: 600; }
-  .status.ready {
-    font-size: 16px; font-weight: 700; color: var(--mode-text); background: var(--mode-soft);
-    border-radius: 10px; padding: 8px 10px; line-height: 1.4;
-  }
+  .status[hidden] { display: none; }
   .fallback { display: block; text-align: center; font-size: 14px; color: var(--label2); text-decoration: underline; line-height: 1.4; }
   .fallback[hidden] { display: none; }
   @media (prefers-reduced-motion: reduce) {
@@ -301,7 +307,7 @@ if (!location.search.includes('v=')) {
   <header>
     <p class="clinic">木子澄安診所</p>
     <h1>線上預約 <span class="tag" id="tag">複診</span></h1>
-    <p class="lead">依照就醫需求填寫後送出，櫃台確認後會回覆。</p>
+    <p class="lead">依照就醫需求填寫後送出，櫃台會在門診時間內 1 小時內回覆。</p>
     <ol class="flow">
       <li><b>填寫資料</b></li>
       <li>開啟 LINE</li>
@@ -332,37 +338,7 @@ if (!location.search.includes('v=')) {
       <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
     </summary>
     <div class="body">
-      <div class="schedule">
-        <div class="corner"></div>
-        <div class="day">日</div><div class="day">一</div><div class="day">二</div><div class="day">三</div><div class="day">四</div><div class="day">五</div><div class="day">六</div>
-
-        <div class="time">早<br>08:00<br>12:00</div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-
-        <div class="time">午<br>14:30<br>17:30</div>
-        <div class="cell"></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"></div>
-
-        <div class="time">晚<br>18:00<br>21:00</div>
-        <div class="cell"></div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"><span class="dot dot-b">林</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"><span class="dot dot-a">李</span></div>
-        <div class="cell"></div>
-      </div>
+      <div class="schedule" id="schedule"></div>
       <p class="schedule-note">休診前 10 分鐘停止掛號</p>
       <div class="schedule-legend">
         <span><i class="dot-sm dot-a"></i>李品翰醫師－急診外傷科</span>
@@ -400,7 +376,13 @@ if (!location.search.includes('v=')) {
         <label for="idNumber">身分證字號</label>
         <input id="idNumber" maxlength="20" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false">
       </div>
-      <div class="row"><label for="birthday">出生日期</label><input id="birthday" type="date"></div>
+      <div class="row"><label for="bY">出生日期</label>
+        <div class="bday" id="birthday">
+          <span>民國</span><select id="bY" aria-label="出生年（民國）"></select><span>年</span>
+          <select id="bM" aria-label="出生月"></select><span>月</span>
+          <select id="bD" aria-label="出生日"></select><span>日</span>
+        </div>
+      </div>
       <div class="row"><label for="phone">手機</label><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12"></div>
     </div>
     <p class="foot">外籍人士請填居留證號碼或護照號碼。</p>
@@ -423,15 +405,15 @@ if (!location.search.includes('v=')) {
   <div class="inner">
     <div class="summary"><span class="tag" id="sumTag">複診</span><span id="sumText">尚未選擇預約項目</span></div>
     <a class="send incomplete" id="send" href="#">用 LINE 傳送預約</a>
-    <div class="status" id="status">填寫完成後按上方按鈕</div>
-    <a class="fallback" id="fallback" href="#" hidden>LINE 若顯示錯誤，點這裡開啟聊天室，長按輸入框「貼上」</a>
+    <div class="status warn" id="status" hidden></div>
+    <a class="fallback" id="fallback" href="#" hidden>LINE 顯示錯誤時，點這裡開聊天室，長按輸入框貼上</a>
   </div>
 </div>
 
 <script src="holidays.js"></script>
 <script>
 // ===== 設定區 =====
-const APP_REVISION = '2026-10-21';
+const APP_REVISION = '2026-10-30';
 const LINE_ID = '@muzichengan';
 const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
 const oaMessageUrl = text => 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(text);
@@ -444,6 +426,9 @@ const SESSION_TIME = { AM: '08:00 - 12:00', PM: '14:30 - 17:30', EVE: '18:00 - 2
 const FULL = { 0: ['AM'], 1: ['AM', 'PM', 'EVE'], 2: ['AM', 'PM', 'EVE'], 3: ['AM', 'PM', 'EVE'], 4: ['AM', 'PM', 'EVE'], 5: ['AM', 'PM', 'EVE'], 6: ['AM'] };
 const WOUND = { 1: ['AM', 'PM'], 2: ['EVE'], 3: ['AM', 'PM'], 4: ['EVE'], 5: ['PM', 'EVE'], 6: ['AM'] };
 const ENDO = { 0: ['AM'], 1: ['EVE'], 2: ['AM', 'PM'], 3: ['EVE'], 4: ['AM', 'PM'], 5: ['AM'] };
+// 醫師排班：每個字依序對應週日到週六，A／B 對照 DOCTORS，- 代表沒有門診。門診時刻表也由這裡產生。
+const DOCTORS = { A: '李品翰醫師', B: '林彥廷醫師' };
+const DOC = { AM: 'BABABBA', PM: '-ABABA-', EVE: '-BABAA-' };
 const ITEMS = [
   { name: '健保門診', sch: FULL },
   { name: '自費健檢', sch: FULL },
@@ -451,8 +436,8 @@ const ITEMS = [
   { name: '自費點滴', sch: FULL },
   { name: '傷口照護', sch: WOUND },
   { name: '減重諮詢', sch: FULL },
-  { name: '其他', label: '其他（如超音波）', sch: FULL, custom: true },
   { name: '高山症與旅遊醫學', sch: WOUND },
+  { name: '其他', label: '其他（如超音波）', sch: FULL, custom: true },
 ];
 // ==================
 
@@ -489,6 +474,17 @@ function btn(html, pressed, onClick, cls) {
   b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
   b.onclick = onClick;
   return b;
+}
+function doctorOf(s, d) { return DOCTORS[DOC[s][d.getDay()]] || ''; }
+function renderSchedule() {
+  const box = $('schedule');
+  box.innerHTML = '<div class="corner"></div>' + WK.map(w => '<div class="day">' + w + '</div>').join('');
+  Object.keys(DOC).forEach(s => {
+    const [from, to] = SESSION_TIME[s].split(' - ');
+    box.insertAdjacentHTML('beforeend', '<div class="time">' + S[s][0] + '<br>' + from + '<br>' + to + '</div>');
+    [...DOC[s]].forEach(c => box.insertAdjacentHTML('beforeend', '<div class="cell">' +
+      (DOCTORS[c] ? '<span class="dot dot-' + c.toLowerCase() + '">' + DOCTORS[c][0] + '</span>' : '') + '</div>'));
+  });
 }
 function hint(text) { const p = document.createElement('div'); p.className = 'hint'; p.textContent = text; return p; }
 
@@ -537,12 +533,17 @@ function renderDates() {
     const key = ymd(d);
     const showMonth = idx === 0 || d.getDate() === 1;
     const label = showMonth ? (d.getMonth() + 1) + '/' + d.getDate() : String(d.getDate());
-    const inner = label + (key === todayKey ? '<small>今天</small>' : '');
+    // 診所整天停診標「休」，和「這天沒開放這個項目」的灰色日期區分
+    const closed = HOLIDAYS.includes(key) || FULL[d.getDay()].every(s => HOLIDAYS.includes(key + ' ' + S[s]));
+    const inner = label + (closed ? '<small>休</small>' : key === todayKey ? '<small>今天</small>' : '');
     const cell = document.createElement('div');
     if (sessionsOn(st.item, d).length) {
       const b = btn(inner, st.date === key, () => {
-        st.date = key; st.session = null; renderAll(); goNext('sec-date');
-      }, 'day-btn' + (key === todayKey ? ' today' : '') + (showMonth ? ' mo' : ''));
+        // 這天只有一個時段可選就直接選好，跳過時段步驟
+        const ss = sessionsOn(st.item, d);
+        st.date = key; st.session = ss.length === 1 ? ss[0] : null;
+        renderAll(); goNext(st.session ? 'sec-session' : 'sec-date');
+      },'day-btn' + (key === todayKey ? ' today' : '') + (showMonth ? ' mo' : ''));
       b.setAttribute('aria-label', dateLabel(key));
       cell.appendChild(b);
     } else {
@@ -555,7 +556,7 @@ function renderDates() {
   box.appendChild(cal);
 
   const picked = document.createElement('p'); picked.className = 'picked';
-  picked.textContent = st.date ? '已選：' + dateLabel(st.date) : '灰色日期沒有開放這個項目';
+  picked.textContent = st.date ? '已選：' + dateLabel(st.date) : '灰色日期沒有開放這個項目，標「休」是診所休診';
   if (!st.date) picked.style.color = 'var(--label2)', picked.style.fontWeight = '400';
   box.appendChild(picked);
 }
@@ -569,7 +570,8 @@ function renderSessions() {
   const box = $('sessions'); box.innerHTML = '';
   if (!st.date) { box.appendChild(hint('請先選擇日期')); return; }
   const grid = document.createElement('div'); grid.className = 'grid sessions';
-  sessionsOn(st.item, parse(st.date)).forEach(s => grid.appendChild(btn('<b>' + S[s] + '</b><span>' + SESSION_TIME[s] + '</span>', st.session === s, () => {
+  const d = parse(st.date);
+  sessionsOn(st.item, d).forEach(s => grid.appendChild(btn('<b>' + S[s] + '</b><span>' + SESSION_TIME[s] + '</span><span>' + doctorOf(s, d)[0] + '醫師</span>', st.session === s, () => {
     const changed = st.session !== s;
     st.session = s; renderAll();
     if (changed) goNext('sec-session');
@@ -593,8 +595,32 @@ function idProblem(v) {
   if (!/^[A-Z0-9]{6,20}$/.test(v)) return '證件號碼格式不對，請再確認（只能有英文字母和數字）';
   return '';
 }
+// 年份由今年往前排，空白選項放在民國 60 年前面，手機選單一打開就停在中間年齡層，不必從今年一路滑下去
+function fillBirthday() {
+  const y0 = new Date().getFullYear();
+  const opt = (v, t) => '<option value="' + v + '">' + t + '</option>';
+  let ys = '';
+  for (let y = y0; y >= 1912; y--) {
+    if (y === 1971) ys += opt('', '－');
+    ys += opt(y, y - 1911);
+  }
+  $('bY').innerHTML = ys; $('bY').value = '';
+  $('bM').innerHTML = opt('', '－') + Array.from({ length: 12 }, (_, i) => opt(i + 1, i + 1)).join('');
+  fillDays();
+}
+function fillDays() {
+  const y = Number($('bY').value) || 2000, m = Number($('bM').value) || 1;
+  const n = new Date(y, m, 0).getDate(), keep = $('bD').value;
+  $('bD').innerHTML = '<option value="">－</option>' + Array.from({ length: n }, (_, i) => '<option value="' + (i + 1) + '">' + (i + 1) + '</option>').join('');
+  $('bD').value = Number(keep) <= n ? keep : '';
+}
+// 三格都選了才回傳 YYYY-MM-DD，否則回傳空字串
+function birthVal() {
+  const y = $('bY').value, m = $('bM').value, d = $('bD').value;
+  return y && m && d ? y + '-' + m.padStart(2, '0') + '-' + d.padStart(2, '0') : '';
+}
 function birthdayText() {
-  const v = $('birthday').value;
+  const v = birthVal();
   if (!v) return '（未填）';
   const [y, m, d] = v.split('-').map(Number);
   return y + '年' + m + '月' + d + '日\n（民國' + (y - 1911) + '年' + m + '月' + d + '日）';
@@ -609,6 +635,7 @@ function message() {
   lines.push('姓名：' + ($('patientName').value.trim() || '（未填）'));
   lines.push('項目：' + (itemText() || '（未選）'));
   lines.push('時間：' + (st.date ? dateLabel(st.date) + (st.session ? S[st.session] : '（未選時段）') : '（未選）'));
+  if (st.session) lines.push('醫師：' + doctorOf(st.session, parse(st.date)));
   if (st.isNew) {
     lines.push('ＩＤ：' + (idVal() || '（未填）'));
     lines.push('生日：' + birthdayText());
@@ -630,7 +657,9 @@ function missing() {
   if (st.isNew) {
     const idp = idProblem(idVal());
     if (idp) list.push({ sec: 'sec-new', input: 'idNumber', msg: idp });
-    if (!$('birthday').value) list.push({ sec: 'sec-new', input: 'birthday', msg: '請填寫出生日期' });
+    const bv = birthVal();
+    if (!bv) list.push({ sec: 'sec-new', input: 'birthday', msg: '請選擇出生日期的年、月、日' });
+    else if (bv > ymd(new Date())) list.push({ sec: 'sec-new', input: 'birthday', msg: '出生日期不能晚於今天，請再確認' });
     if (!/^09\d{8}$/.test(phoneVal())) list.push({ sec: 'sec-new', input: 'phone', msg: phoneVal() ? '手機號碼格式不對，請填 09 開頭共 10 碼' : '請填寫手機' });
   }
   return list;
@@ -667,22 +696,18 @@ function update() {
   $('sumText').className = parts.length ? 'ok' : '';
 
   $('fallback').hidden = !!miss.length;
+  // 狀態列只在按過送出、還有缺漏時顯示，平常不佔底部空間
+  $('status').hidden = !(miss.length && st.tried);
   if (miss.length) {
     a.classList.add('incomplete'); a.href = '#';
     if (st.tried) {
       miss.forEach(m => { $(m.sec).classList.add('missing'); if (m.input) $(m.input).setAttribute('aria-invalid', 'true'); });
       $('status').textContent = miss[0].msg + (miss.length > 1 ? '（還有 ' + (miss.length - 1) + ' 項未完成）' : '');
-      $('status').className = 'status warn';
-    } else {
-      $('status').textContent = '填寫完成後按上方按鈕';
-      $('status').className = 'status';
     }
   } else {
     a.classList.remove('incomplete');
     a.href = oaMessageUrl(message());
     $('fallback').href = CHAT_URL;
-    $('status').textContent = '按下後會開啟 LINE 並自動帶入預約內容，再按一次「傳送」即完成';
-    $('status').className = 'status ready';
   }
 }
 function renderAll() {
@@ -717,9 +742,11 @@ function copyNow(text) {
 
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
 $('t-new').onclick = () => { st.isNew = true; renderAll(); };
-['patientName', 'idNumber', 'birthday', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
-$('birthday').max = ymd(new Date());
+['patientName', 'idNumber', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
+['bY', 'bM', 'bD'].forEach(id => $(id).addEventListener('change', () => { if (id !== 'bD') fillDays(); update(); }));
+fillBirthday();
 $('rev').textContent = APP_REVISION;
+renderSchedule();
 $('sec-schedule').addEventListener('toggle', e => { $('sched-hint').textContent = e.target.open ? '收合' : '展開'; });
 $('send').addEventListener('click', e => {
   const miss = missing();
