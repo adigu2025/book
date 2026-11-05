@@ -277,14 +277,32 @@
   .bday[aria-invalid="true"] select { box-shadow: 0 0 0 2px var(--red); }
   .row input[aria-invalid="true"] { box-shadow: none; }
   .foot { font-size: 13px; line-height: 1.6; color: var(--label2); margin: 8px 4px 0; }
-  /* 初診：從哪裡知道本診所（可複選，Google 與社群媒體選了才展開第二層） */
-  .src-sub { margin-top: 14px; padding-top: 12px; border-top: .5px solid var(--sep); display: grid; gap: 8px; }
-  .src-sub > p { margin: 0 2px; font-size: 14px; color: var(--label2); }
+  /* 初診：從哪裡知道本診所（可複選）。
+     第二層（Google 細項、其他的說明）用同色系淺底色塊包起來，上緣有小箭頭指向觸發它的按鈕，一眼看得出是追問。 */
+  .src-sub {
+    position: relative; display: grid; gap: 8px; margin-top: 12px; padding: 12px;
+    background: var(--mode-soft); border-radius: 12px;
+  }
+  .src-sub::before {
+    content: ""; position: absolute; top: -8px; left: var(--arrow-x, 50%); transform: translateX(-50%);
+    border: 8px solid transparent; border-top: 0; border-bottom-color: var(--mode-soft);
+  }
+  #src-other { --arrow-x: 75%; }
+  .src-sub > p { margin: 0 2px; font-size: 14px; font-weight: 600; color: var(--mode-text); }
   .src-sub .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* 有第二層的 Google 佔滿第一列，第二層緊接在它下面展開；其餘 6 個兩欄排成三列 */
-  #sources .wide, #sources .items > .src-sub { grid-column: 1 / -1; }
-  #sources .items > .src-sub { margin: 0 0 6px; padding-top: 4px; border-top: 0; }
+  /* 色塊上的按鈕與輸入框用白底，和色塊分出層次 */
+  .src-sub .opt, .src-sub input { background: var(--card); }
   .src-sub .opt { min-height: 44px; padding: 8px 6px; font-size: 15px; }
+  .src-sub .opt[aria-pressed="true"] { background: var(--card); }
+  .src-sub.enter { animation: sub-in .25s var(--ease); }
+  @keyframes sub-in { from { opacity: 0; transform: translateY(-6px); } }
+  .src-sub .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #sources .items > .src-sub { grid-column: 1 / -1; margin: 4px 0; }
+  /* 有小字說明的按鈕比較高，全部按鈕統一高度，排起來整齊 */
+  #sources .items > .opt { min-height: 68px; }
+  /* Google 按鈕右側的小箭頭：提示可以再細分，展開後轉向 */
+  .opt .more { display: inline-block; margin-left: 6px; font-style: normal; font-size: 12px; color: var(--label2); transition: transform .2s var(--ease); }
+  .opt[aria-pressed="true"] .more { transform: rotate(180deg); color: var(--mode-text); }
   /* 傳送內容預覽：訊息泡泡 */
   .bubble-wrap { display: flex; justify-content: flex-end; padding-right: 4px; }
   pre.preview {
@@ -324,6 +342,7 @@
   .fallback[hidden] { display: none; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before { transition: none !important; }
+    .src-sub.enter { animation: none; }
   }
 </style>
 </head>
@@ -486,10 +505,10 @@ const WK = ['日', '一', '二', '三', '四', '五', '六'];
 const st = { isNew: false, item: null, date: null, session: null, tried: false, expired: false, src: new Set(), srcSub: new Set() };
 // 初診：從哪裡知道本診所。有 sub 的選項，選了才展開第二層（也可複選，不選第二層也可以）。
 const SOURCES = [
-  { name: 'Google', sub: ['醫師 blog', '搜尋或地圖'], q: '從 Google 的哪裡看到？' },
-  { name: 'Threads' },
-  { name: 'Instagram' },
-  { name: 'Facebook' },
+// 排列：主力社群媒體放第一格（第二層細分平台），Google 在旁邊；hint 是按鈕上的小字說明。
+  { name: '社群媒體', hint: 'Threads／IG／FB', sub: ['Threads', 'Instagram', 'Facebook'], q: '從哪個社群看到？' },
+  { name: 'Google', hint: 'blog／搜尋／地圖' },
+  { name: 'AI 推薦', hint: 'ChatGPT 等' },
   { name: '親友介紹' },
   { name: '經過看到' },
   { name: '其他', custom: true },
@@ -682,31 +701,39 @@ function birthdayText() {
   const [y, m, d] = v.split('-').map(Number);
   return y + '年' + m + '月' + d + '日\n（民國' + (y - 1911) + '年' + m + '月' + d + '日）';
 }
+let srcOpened = null; // 剛展開的選項，只有這一次播展開動畫，之後點第二層重繪時不再閃
 function renderSources() {
   const box = $('sources'); box.innerHTML = '';
   const grid = document.createElement('div'); grid.className = 'grid items';
-  SOURCES.forEach(s => {
-    grid.appendChild(btn('<b>' + s.name + '</b>', st.src.has(s.name), () => {
+  const opened = srcOpened; srcOpened = null;
+  const subs = [];
+  SOURCES.forEach((s, i) => {
+    grid.appendChild(btn('<b>' + s.name + (s.sub ? '<i class="more" aria-hidden="true">▼</i>' : '') + '</b>' + (s.hint ? '<span>' + s.hint + '</span>' : ''), st.src.has(s.name), () => {
       if (st.src.has(s.name)) { st.src.delete(s.name); (s.sub || []).forEach(x => st.srcSub.delete(x)); }
-      else st.src.add(s.name);
+      else { st.src.add(s.name); srcOpened = s.name; }
       renderAll();
       if (s.custom && st.src.has(s.name)) $('srcOther').focus();
-    }, 'opt' + (s.sub ? ' wide' : '')));
-    if (!s.sub || !st.src.has(s.name)) return;
-    // 第二層緊接在這個選項下面
-    const wrap = document.createElement('div'); wrap.className = 'src-sub';
-    wrap.innerHTML = '<p>' + s.q + '（可複選）</p>';
-    const g = document.createElement('div'); g.className = 'grid';
-    s.sub.forEach(x => g.appendChild(btn('<b>' + x + '</b>', st.srcSub.has(x), () => {
-      st.srcSub.has(x) ? st.srcSub.delete(x) : st.srcSub.add(x);
-      renderAll();
-    })));
-    wrap.appendChild(g); grid.appendChild(wrap);
+    }));
+    if (s.sub && st.src.has(s.name)) subs.push([s, i % 2]);
+    // 第二層放在該選項所在那一列的下面，箭頭指向左欄或右欄
+    if (i % 2 === 0 && i < SOURCES.length - 1) return;
+    subs.splice(0).forEach(([s, col]) => {
+      const wrap = document.createElement('div'); wrap.className = 'src-sub' + (opened === s.name ? ' enter' : '');
+      wrap.style.setProperty('--arrow-x', col ? '75%' : '25%');
+      wrap.innerHTML = '<p>' + s.q + '（可複選）</p>';
+      const g = document.createElement('div'); g.className = 'grid' + (s.sub.length === 3 ? ' three' : '');
+      s.sub.forEach(x => g.appendChild(btn('<b>' + x + '</b>', st.srcSub.has(x), () => {
+        st.srcSub.has(x) ? st.srcSub.delete(x) : st.srcSub.add(x);
+        renderAll();
+      })));
+      wrap.appendChild(g); grid.appendChild(wrap);
+    });
   });
   box.appendChild(grid);
   $('src-other').hidden = !st.src.has('其他');
+  $('src-other').classList.toggle('enter', opened === '其他');
 }
-// 例：Google（醫師 blog）、親友介紹、其他（路過藥局推薦）
+// 例：社群媒體（Threads）、Google、其他（路過藥局推薦）
 function sourceText() {
   return SOURCES.filter(s => st.src.has(s.name)).map(s => {
     const subs = (s.sub || []).filter(x => st.srcSub.has(x));
