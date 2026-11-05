@@ -281,7 +281,9 @@
   .src-sub { margin-top: 14px; padding-top: 12px; border-top: .5px solid var(--sep); display: grid; gap: 8px; }
   .src-sub > p { margin: 0 2px; font-size: 14px; color: var(--label2); }
   .src-sub .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .src-sub .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* 有第二層的 Google 佔滿第一列，第二層緊接在它下面展開；其餘 6 個兩欄排成三列 */
+  #sources .wide, #sources .items > .src-sub { grid-column: 1 / -1; }
+  #sources .items > .src-sub { margin: 0 0 6px; padding-top: 4px; border-top: 0; }
   .src-sub .opt { min-height: 44px; padding: 8px 6px; font-size: 15px; }
   /* 傳送內容預覽：訊息泡泡 */
   .bubble-wrap { display: flex; justify-content: flex-end; padding-right: 4px; }
@@ -484,8 +486,10 @@ const WK = ['日', '一', '二', '三', '四', '五', '六'];
 const st = { isNew: false, item: null, date: null, session: null, tried: false, expired: false, src: new Set(), srcSub: new Set() };
 // 初診：從哪裡知道本診所。有 sub 的選項，選了才展開第二層（也可複選，不選第二層也可以）。
 const SOURCES = [
-  { name: 'Google', sub: ['醫師 blog', 'Google 搜尋或地圖'], q: '從 Google 的哪裡看到？' },
-  { name: '社群媒體', hint: 'Threads／IG／FB', sub: ['Threads', 'Instagram', 'Facebook'], q: '從哪個社群看到？' },
+  { name: 'Google', sub: ['醫師 blog', '搜尋或地圖'], q: '從 Google 的哪裡看到？' },
+  { name: 'Threads' },
+  { name: 'Instagram' },
+  { name: 'Facebook' },
   { name: '親友介紹' },
   { name: '經過看到' },
   { name: '其他', custom: true },
@@ -681,23 +685,25 @@ function birthdayText() {
 function renderSources() {
   const box = $('sources'); box.innerHTML = '';
   const grid = document.createElement('div'); grid.className = 'grid items';
-  SOURCES.forEach(s => grid.appendChild(btn('<b>' + s.name + '</b>' + (s.hint ? '<span>' + s.hint + '</span>' : ''), st.src.has(s.name), () => {
-    if (st.src.has(s.name)) { st.src.delete(s.name); (s.sub || []).forEach(x => st.srcSub.delete(x)); }
-    else st.src.add(s.name);
-    renderAll();
-    if (s.custom && st.src.has(s.name)) $('srcOther').focus();
-  })));
-  box.appendChild(grid);
-  SOURCES.filter(s => s.sub && st.src.has(s.name)).forEach(s => {
+  SOURCES.forEach(s => {
+    grid.appendChild(btn('<b>' + s.name + '</b>', st.src.has(s.name), () => {
+      if (st.src.has(s.name)) { st.src.delete(s.name); (s.sub || []).forEach(x => st.srcSub.delete(x)); }
+      else st.src.add(s.name);
+      renderAll();
+      if (s.custom && st.src.has(s.name)) $('srcOther').focus();
+    }, 'opt' + (s.sub ? ' wide' : '')));
+    if (!s.sub || !st.src.has(s.name)) return;
+    // 第二層緊接在這個選項下面
     const wrap = document.createElement('div'); wrap.className = 'src-sub';
     wrap.innerHTML = '<p>' + s.q + '（可複選）</p>';
-    const g = document.createElement('div'); g.className = 'grid' + (s.sub.length === 3 ? ' three' : '');
+    const g = document.createElement('div'); g.className = 'grid';
     s.sub.forEach(x => g.appendChild(btn('<b>' + x + '</b>', st.srcSub.has(x), () => {
       st.srcSub.has(x) ? st.srcSub.delete(x) : st.srcSub.add(x);
       renderAll();
     })));
-    wrap.appendChild(g); box.appendChild(wrap);
+    wrap.appendChild(g); grid.appendChild(wrap);
   });
+  box.appendChild(grid);
   $('src-other').hidden = !st.src.has('其他');
 }
 // 例：Google（醫師 blog）、親友介紹、其他（路過藥局推薦）
