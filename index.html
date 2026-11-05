@@ -287,7 +287,7 @@
     content: ""; position: absolute; top: -8px; left: var(--arrow-x, 50%); transform: translateX(-50%);
     border: 8px solid transparent; border-top: 0; border-bottom-color: var(--mode-soft);
   }
-  #src-other { --arrow-x: 75%; }
+  #src-other { --arrow-x: 50%; }
   .src-sub > p { margin: 0 2px; font-size: 14px; font-weight: 600; color: var(--mode-text); }
   .src-sub .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* 色塊上的按鈕與輸入框用白底，和色塊分出層次 */
@@ -297,7 +297,8 @@
   .src-sub.enter { animation: sub-in .25s var(--ease); }
   @keyframes sub-in { from { opacity: 0; transform: translateY(-6px); } }
   .src-sub .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  #sources .items > .src-sub { grid-column: 1 / -1; margin: 4px 0; }
+  #sources .items > .src-sub, #sources .items > .wide { grid-column: 1 / -1; }
+  #sources .items > .src-sub { margin: 4px 0; }
   /* 有小字說明的按鈕比較高，全部按鈕統一高度，排起來整齊 */
   #sources .items > .opt { min-height: 68px; }
   /* Google 按鈕右側的小箭頭：提示可以再細分，展開後轉向 */
@@ -507,11 +508,12 @@ const st = { isNew: false, item: null, date: null, session: null, tried: false, 
 const SOURCES = [
 // 排列：主力社群媒體放第一格（第二層細分平台），Google 在旁邊；hint 是按鈕上的小字說明。
   { name: '社群媒體', hint: 'Threads／IG／FB', sub: ['Threads', 'Instagram', 'Facebook'], q: '從哪個社群看到？' },
-  { name: 'Google', hint: 'blog／搜尋／地圖' },
-  { name: 'AI 推薦', hint: 'ChatGPT 等' },
+  { name: 'Google', hint: 'blog／搜尋／地圖', sub: ['醫師 blog', '搜尋或地圖'], q: '從 Google 的哪裡看到？' },
+  // wide：佔滿一整列。AI 推薦的小字較長，半寬會折成三行，所以獨佔一列
+  { name: 'AI 推薦', hint: 'ChatGPT／Gemini／Claude 等', wide: true },
   { name: '親友介紹' },
   { name: '經過看到' },
-  { name: '其他', custom: true },
+  { name: '其他', custom: true, wide: true },
 ];
 const EXPIRED_MSG = '原本選的時段已經開始或已過期，請重新選擇';
 const $ = id => document.getElementById(id);
@@ -707,19 +709,22 @@ function renderSources() {
   const grid = document.createElement('div'); grid.className = 'grid items';
   const opened = srcOpened; srcOpened = null;
   const subs = [];
+  let col = 0; // 目前排到這一列的第幾欄
   SOURCES.forEach((s, i) => {
     grid.appendChild(btn('<b>' + s.name + (s.sub ? '<i class="more" aria-hidden="true">▼</i>' : '') + '</b>' + (s.hint ? '<span>' + s.hint + '</span>' : ''), st.src.has(s.name), () => {
       if (st.src.has(s.name)) { st.src.delete(s.name); (s.sub || []).forEach(x => st.srcSub.delete(x)); }
       else { st.src.add(s.name); srcOpened = s.name; }
       renderAll();
       if (s.custom && st.src.has(s.name)) $('srcOther').focus();
-    }));
-    if (s.sub && st.src.has(s.name)) subs.push([s, i % 2]);
-    // 第二層放在該選項所在那一列的下面，箭頭指向左欄或右欄
-    if (i % 2 === 0 && i < SOURCES.length - 1) return;
-    subs.splice(0).forEach(([s, col]) => {
+    }, 'opt' + (s.wide ? ' wide' : '')));
+    // 第二層放在該選項所在那一列的下面，箭頭指向左欄、右欄或正中間（整列寬的按鈕）
+    if (s.sub && st.src.has(s.name)) subs.push([s, s.wide ? '50%' : col ? '75%' : '25%']);
+    col = s.wide ? 2 : col + 1;
+    if (col < 2 && i < SOURCES.length - 1) return;
+    col = 0;
+    subs.splice(0).forEach(([s, x]) => {
       const wrap = document.createElement('div'); wrap.className = 'src-sub' + (opened === s.name ? ' enter' : '');
-      wrap.style.setProperty('--arrow-x', col ? '75%' : '25%');
+      wrap.style.setProperty('--arrow-x', x);
       wrap.innerHTML = '<p>' + s.q + '（可複選）</p>';
       const g = document.createElement('div'); g.className = 'grid' + (s.sub.length === 3 ? ' three' : '');
       s.sub.forEach(x => g.appendChild(btn('<b>' + x + '</b>', st.srcSub.has(x), () => {
