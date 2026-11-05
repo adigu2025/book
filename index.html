@@ -288,6 +288,8 @@
     border: 8px solid transparent; border-top: 0; border-bottom-color: var(--mode-soft);
   }
   #src-other { --arrow-x: 50%; }
+  /* .src-sub 的 display: grid 會蓋過 hidden 屬性，要明確寫回隱藏，否則沒選「其他」也會出現說明欄 */
+  .src-sub[hidden] { display: none; }
   .src-sub > p { margin: 0 2px; font-size: 14px; font-weight: 600; color: var(--mode-text); }
   .src-sub .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* 色塊上的按鈕與輸入框用白底，和色塊分出層次 */
