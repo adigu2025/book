@@ -277,6 +277,12 @@
   .bday[aria-invalid="true"] select { box-shadow: 0 0 0 2px var(--red); }
   .row input[aria-invalid="true"] { box-shadow: none; }
   .foot { font-size: 13px; line-height: 1.6; color: var(--label2); margin: 8px 4px 0; }
+  /* 初診：從哪裡知道本診所（可複選，Google 與社群媒體選了才展開第二層） */
+  .src-sub { margin-top: 14px; padding-top: 12px; border-top: .5px solid var(--sep); display: grid; gap: 8px; }
+  .src-sub > p { margin: 0 2px; font-size: 14px; color: var(--label2); }
+  .src-sub .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .src-sub .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .src-sub .opt { min-height: 44px; padding: 8px 6px; font-size: 15px; }
   /* 傳送內容預覽：訊息泡泡 */
   .bubble-wrap { display: flex; justify-content: flex-end; padding-right: 4px; }
   pre.preview {
@@ -409,6 +415,14 @@
     <div class="card"><textarea id="note" rows="2" maxlength="100" aria-label="備註"></textarea></div>
   </section>
 
+  <section id="sec-src" class="step" hidden>
+    <h2 class="sec-title">您從哪裡知道本診所 <span class="opt-tag">選填，可複選</span></h2>
+    <div class="card">
+      <div id="sources"></div>
+      <div class="src-sub" id="src-other" hidden><p>請簡單說明</p><input id="srcOther" maxlength="30" aria-label="其他來源說明"></div>
+    </div>
+  </section>
+
   <section id="sec-preview">
     <h2 class="sec-title">將傳送的內容</h2>
     <div class="card"><div class="bubble-wrap"><pre class="preview" id="preview"></pre></div><p class="bubble-meta">按下傳送鈕後，這段內容會自動帶入 LINE 輸入框</p></div>
@@ -467,7 +481,15 @@ const COVER = {};
 // ==================
 
 const WK = ['日', '一', '二', '三', '四', '五', '六'];
-const st = { isNew: false, item: null, date: null, session: null, tried: false, expired: false };
+const st = { isNew: false, item: null, date: null, session: null, tried: false, expired: false, src: new Set(), srcSub: new Set() };
+// 初診：從哪裡知道本診所。有 sub 的選項，選了才展開第二層（也可複選，不選第二層也可以）。
+const SOURCES = [
+  { name: 'Google', sub: ['醫師 blog', 'Google 搜尋或地圖'], q: '從 Google 的哪裡看到？' },
+  { name: '社群媒體', hint: 'Threads／IG／FB', sub: ['Threads', 'Instagram', 'Facebook'], q: '從哪個社群看到？' },
+  { name: '親友介紹' },
+  { name: '經過看到' },
+  { name: '其他', custom: true },
+];
 const EXPIRED_MSG = '原本選的時段已經開始或已過期，請重新選擇';
 const $ = id => document.getElementById(id);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -656,6 +678,36 @@ function birthdayText() {
   const [y, m, d] = v.split('-').map(Number);
   return y + '年' + m + '月' + d + '日\n（民國' + (y - 1911) + '年' + m + '月' + d + '日）';
 }
+function renderSources() {
+  const box = $('sources'); box.innerHTML = '';
+  const grid = document.createElement('div'); grid.className = 'grid items';
+  SOURCES.forEach(s => grid.appendChild(btn('<b>' + s.name + '</b>' + (s.hint ? '<span>' + s.hint + '</span>' : ''), st.src.has(s.name), () => {
+    if (st.src.has(s.name)) { st.src.delete(s.name); (s.sub || []).forEach(x => st.srcSub.delete(x)); }
+    else st.src.add(s.name);
+    renderAll();
+    if (s.custom && st.src.has(s.name)) $('srcOther').focus();
+  })));
+  box.appendChild(grid);
+  SOURCES.filter(s => s.sub && st.src.has(s.name)).forEach(s => {
+    const wrap = document.createElement('div'); wrap.className = 'src-sub';
+    wrap.innerHTML = '<p>' + s.q + '（可複選）</p>';
+    const g = document.createElement('div'); g.className = 'grid' + (s.sub.length === 3 ? ' three' : '');
+    s.sub.forEach(x => g.appendChild(btn('<b>' + x + '</b>', st.srcSub.has(x), () => {
+      st.srcSub.has(x) ? st.srcSub.delete(x) : st.srcSub.add(x);
+      renderAll();
+    })));
+    wrap.appendChild(g); box.appendChild(wrap);
+  });
+  $('src-other').hidden = !st.src.has('其他');
+}
+// 例：Google（醫師 blog）、親友介紹、其他（路過藥局推薦）
+function sourceText() {
+  return SOURCES.filter(s => st.src.has(s.name)).map(s => {
+    const subs = (s.sub || []).filter(x => st.srcSub.has(x));
+    if (s.custom) { const t = $('srcOther').value.trim(); return t ? s.name + '（' + t + '）' : s.name; }
+    return subs.length ? s.name + '（' + subs.join('、') + '）' : s.name;
+  }).join('、');
+}
 function itemText() {
   if (!st.item) return '';
   if (!st.item.custom) return st.item.name;
@@ -674,6 +726,8 @@ function message() {
   }
   const note = $('note').value.trim();
   if (note) lines.push('備註：' + note);
+  const src = st.isNew ? sourceText() : '';
+  if (src) lines.push('得知管道：' + src);
   return lines.join('\n');
 }
 
@@ -706,6 +760,7 @@ function markDone(miss) {
     'sec-date': !!st.date,
     'sec-session': !!st.session,
     'sec-new': true,
+    'sec-src': st.src.size > 0,
     'sec-note': !!$('note').value.trim(),
   };
   Object.keys(filled).forEach(id => $(id).classList.toggle('done', filled[id] && !bad.has(id)));
@@ -748,9 +803,9 @@ function renderAll() {
   $('t-return').setAttribute('aria-pressed', st.isNew ? 'false' : 'true');
   $('t-new').setAttribute('aria-pressed', st.isNew ? 'true' : 'false');
   $('tag').textContent = $('navTag').textContent = st.isNew ? '初診' : '複診';
-  $('sec-new').hidden = !st.isNew;
+  $('sec-new').hidden = $('sec-src').hidden = !st.isNew;
   $('sec-other').hidden = !(st.item && st.item.custom);
-  renderItems(); renderDates(); renderSessions(); update();
+  renderItems(); renderDates(); renderSessions(); renderSources(); update();
 }
 
 // 送出時一律先把預約內容複製到剪貼簿，oaMessage 帶入失敗時病人仍可到聊天室貼上
@@ -775,7 +830,7 @@ function copyNow(text) {
 
 $('t-return').onclick = () => { st.isNew = false; renderAll(); };
 $('t-new').onclick = () => { st.isNew = true; renderAll(); };
-['patientName', 'idNumber', 'phone', 'note', 'otherPurpose'].forEach(id => $(id).addEventListener('input', update));
+['patientName', 'idNumber', 'phone', 'note', 'otherPurpose', 'srcOther'].forEach(id => $(id).addEventListener('input', update));
 ['bY', 'bM', 'bD'].forEach(id => $(id).addEventListener('change', () => { if (id !== 'bD') fillDays(); update(); }));
 fillBirthday();
 $('rev').textContent = APP_REVISION;
