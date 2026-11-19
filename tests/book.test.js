@@ -141,7 +141,7 @@ function loadPage(opts) {
     localStorage: { getItem: () => null, setItem: noop, removeItem: noop },
     navigator: {}, matchMedia: () => ({ matches: true }),
     setTimeout: noop, setInterval: noop, requestAnimationFrame: noop, addEventListener: noop,
-    HOLIDAYS: ['2026-12-25', '2026-12-16 晚診'],
+    HOLIDAYS: ['2026-12-25', '2026-12-16 晚診', '2026-12-19'],
     COVER: ['2026-12-21 晚診 李品翰醫師'],
   };
   ctx.window = ctx;
@@ -165,6 +165,13 @@ const on = (name, date) => P.sessionsOn(P.item(name), P.parse(date)).join(',');
   ['代診後李醫師的項目多了晚診', on('傷口照護', '2026-12-21'), 'AM,PM,EVE'],
   ['代診醫師名字', P.doctorOf('EVE', P.parse('2026-12-21')), '李品翰醫師'],
 ].forEach(([name, got, want]) => expect('排班：' + name, got === want, '得到「' + got + '」，應該是「' + want + '」'));
+
+// 近期停診公告：整天停診但那天本來只有一診（週六、週日只有早診），寫那一診，不寫「全天」（YT 2026-11-19）
+const notice = P.$('notice-list').innerHTML;
+[
+  ['週六整天停診寫早診', '12月19日（週六）早診，<b>停診</b>'],
+  ['平日整天停診寫全天', '12月25日（週五）全天，<b>停診</b>'],
+].forEach(([name, want]) => expect('停診公告：' + name, notice.includes(want), '公告內容：' + notice));
 
 // 依序填好表單後比對整段訊息
 function msgOf(page, fill) {

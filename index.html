@@ -608,7 +608,10 @@ function renderNotice() {
   const rows = [];
   HOLIDAYS.forEach(line => {
     const [date, sess] = String(line).trim().split(/\s+/);
-    if (date >= from && date <= to) rows.push([date + ' ' + (sess || ''), dateLabel(date) + (sess || '全天') + '，<b>停診</b>']);
+    // 整天停診但那天本來只有一診（週六、週日只有早診），直接寫那一診，不寫「全天」
+    const base = sess ? [] : baseSessions(parse(date));
+    const label = sess || (base.length === 1 ? S[base[0]] : '全天');
+    if (date >= from && date <= to) rows.push([date + ' ' + (sess || ''), dateLabel(date) + label + '，<b>停診</b>']);
   });
   Object.keys(COVER).forEach(k => {
     const [date, sess] = k.split(' ');
