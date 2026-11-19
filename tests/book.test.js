@@ -112,5 +112,87 @@ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
   expect('字級 ' + m[1] + 'px 小於 12px（style 第 ' + line + ' 行）', Number(m[1]) >= 12);
 });
 
+// ---- 排班與送出訊息：把 index.html 的主程式放進 node 跑，時間固定在 2026-12-14（一）09:30 ----
+// 頁面程式碼不改結構，這裡用最小的假 DOM 讓它能執行；停診與代診用下面的固定資料，不受 holidays.js 影響。
+function loadPage(opts) {
+  const NOW = new Date(2026, 11, 14, 9, 30).getTime();
+  class FakeDate extends Date {
+    constructor(...a) { if (a.length) super(...a); else super(NOW); }
+    static now() { return NOW; }
+  }
+  const noop = () => {};
+  function el() {
+    const t = { value: '', hidden: false, textContent: '', innerHTML: '', dataset: {}, style: { setProperty: noop },
+      classList: { add: noop, remove: noop, toggle: noop, contains: () => false } };
+    return new Proxy(t, {
+      get: (o, k) => (k in o || typeof k === 'symbol') ? o[k] : () => el(),
+      set: (o, k, v) => { o[k] = v; return true; },
+    });
+  }
+  const els = {};
+  const document = {
+    getElementById: id => els[id] || (els[id] = el()),
+    createElement: el, querySelector: el, querySelectorAll: () => [],
+    body: el(), addEventListener: noop, write: noop, execCommand: noop, hidden: false, activeElement: null,
+  };
+  const ctx = {
+    Date: FakeDate, document, URLSearchParams,
+    location: { search: (opts && opts.search) || '', pathname: '/book/', hash: '' },
+    localStorage: { getItem: () => null, setItem: noop, removeItem: noop },
+    navigator: {}, matchMedia: () => ({ matches: true }),
+    setTimeout: noop, setInterval: noop, requestAnimationFrame: noop, addEventListener: noop,
+    HOLIDAYS: ['2026-12-25', '2026-12-16 晚診'],
+    COVER: ['2026-12-21 晚診 李品翰醫師'],
+  };
+  ctx.window = ctx;
+  const main = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).find(s => s.includes('===== 設定區 ====='));
+  vm.runInNewContext(main + '\nglobalThis.__T = { st, ITEMS, S };', ctx);
+  ctx.$ = document.getElementById;
+  ctx.item = name => ctx.__T.ITEMS.find(i => i.name === name);
+  return ctx;
+}
+
+const P = loadPage();
+const on = (name, date) => P.sessionsOn(P.item(name), P.parse(date)).join(',');
+[
+  ['當天早診已過截止時間，只剩午診晚診', on('健保門診', '2026-12-14'), 'PM,EVE'],
+  ['週二三診都開', on('健保門診', '2026-12-15'), 'AM,PM,EVE'],
+  ['腸胃鏡只排林醫師的診', on('腸胃鏡／痔瘡諮詢', '2026-12-15'), 'AM,PM'],
+  ['整天停診', on('健保門診', '2026-12-25'), ''],
+  ['只停晚診', on('健保門診', '2026-12-16'), 'AM,PM'],
+  ['週日只有早診', on('健保門診', '2026-12-13'), 'AM'],
+  ['代診後林醫師的項目約不到', on('腸胃鏡／痔瘡諮詢', '2026-12-21'), ''],
+  ['代診後李醫師的項目多了晚診', on('傷口照護', '2026-12-21'), 'AM,PM,EVE'],
+  ['代診醫師名字', P.doctorOf('EVE', P.parse('2026-12-21')), '李品翰醫師'],
+].forEach(([name, got, want]) => expect('排班：' + name, got === want, '得到「' + got + '」，應該是「' + want + '」'));
+
+// 依序填好表單後比對整段訊息
+function msgOf(page, fill) {
+  const st = page.__T.st;
+  Object.assign(st, { isNew: false, item: null, date: null, session: null }, fill.st);
+  Object.entries(fill.val || {}).forEach(([id, v]) => { page.$(id).value = v; });
+  return page.message();
+}
+const M = [
+  ['複診', msgOf(loadPage(), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明' } }),
+    '【預約】複診\n姓名：王小明\n項目：健保門診\n時間：12月15日（週二）早診\n醫師：林彥廷醫師'],
+  ['初診', msgOf(loadPage(), { st: { isNew: true, item: P.item('傷口照護'), date: '2026-12-21', session: 'EVE' },
+    val: { patientName: '王小明', idNumber: 'a123456789', phone: '0912-345-678', bY: '1980', bM: '3', bD: '5', note: '右手割傷' } }),
+    '【預約】初診\n姓名：王小明\n項目：傷口照護\n時間：12月21日（週一）晚診\n醫師：李品翰醫師\nＩＤ：A123456789\n生日：1980年3月5日\n（民國69年3月5日）\n手機：0912345678\n備註：右手割傷'],
+  ['複診填了生日', msgOf(loadPage(), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明', bY: '1980', bM: '3', bD: '5' } }),
+    '【預約】複診\n姓名：王小明\n生日：1980年3月5日\n（民國69年3月5日）\n項目：健保門診\n時間：12月15日（週二）早診\n醫師：林彥廷醫師'],
+  ['網址帶來源', msgOf(loadPage({ search: '?utm_source=threads&v=1' }), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明' } }),
+    '【預約】複診\n姓名：王小明\n項目：健保門診\n時間：12月15日（週二）早診\n醫師：林彥廷醫師\n來源：threads'],
+  ['來源只留英數字', msgOf(loadPage({ search: '?utm_source=%3Cb%3EIG%20ad' }), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明' } }).split('\n').pop(),
+    '來源：bIGad'],
+  ['取消', msgOf(loadPage(), { st: { change: true, action: '取消' }, val: { patientName: '王小明', origAppt: '12/15 早診', note: '臨時出差' } }),
+    '【取消】\n姓名：王小明\n原預約：12/15 早診\n備註：臨時出差'],
+  ['取消時就算選過項目也不帶', msgOf(loadPage(), { st: { change: true, action: '取消', item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明', origAppt: '12/15 早診' } }),
+    '【取消】\n姓名：王小明\n原預約：12/15 早診'],
+  ['改約', msgOf(loadPage(), { st: { change: true, action: '改約', item: P.item('健保門診'), date: '2026-12-16', session: 'PM' }, val: { patientName: '王小明', origAppt: '12/15 早診', bY: '1980', bM: '3', bD: '5' } }),
+    '【改約】\n姓名：王小明\n生日：1980年3月5日\n（民國69年3月5日）\n原預約：12/15 早診\n改為：健保門診\n時間：12月16日（週三）午診\n醫師：李品翰醫師'],
+];
+M.forEach(([name, got, want]) => expect('送出訊息：' + name, got === want, '得到：\n' + got + '\n  應該是：\n' + want));
+
 if (fail) { console.log(fail + ' 項沒過'); process.exit(1); }
 console.log('預約頁檢查全部通過（停診 ' + (win.HOLIDAYS || []).length + ' 筆、代診 ' + (win.COVER || []).length + ' 筆）');
