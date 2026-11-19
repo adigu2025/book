@@ -888,6 +888,7 @@ function renderAll() {
 // 送出時一律先把預約內容複製到剪貼簿，oaMessage 帶入失敗時病人仍可到聊天室貼上
 function copyTextFallback(text) {
   const ta = document.createElement('textarea');
+  ta.dataset.copy = '1'; // 不算輸入欄位：否則 focus 會加上 typing 把送出列連同提醒卡藏起來，iOS 移除時又不觸發 focusout
   ta.value = text;
   ta.style.position = 'fixed';
   ta.style.left = '-9999px';
@@ -897,6 +898,7 @@ function copyTextFallback(text) {
   ta.select();
   ta.setSelectionRange(0, text.length);
   try { document.execCommand('copy'); } catch (e) {}
+  ta.blur();
   document.body.removeChild(ta);
 }
 // 同步複製，不擋住接下來的原生連結跳轉
@@ -929,12 +931,14 @@ const SENT_KEY = 'muzi-book-sent';
 const SENT_MIN = 30; // 送出後幾分鐘內回來才提醒
 function markSent() {
   try { localStorage.setItem(SENT_KEY, String(Date.now())); } catch (e) {}
-  setTimeout(() => { $('sentCard').hidden = false; }, 600);
+  setTimeout(showSent, 600);
 }
+// 提醒卡在底部送出列裡，typing 會把整列藏起來，顯示時一併解除
+function showSent() { document.body.classList.remove('typing'); $('sentCard').hidden = false; }
 function checkSent() {
   let t = 0;
   try { t = Number(localStorage.getItem(SENT_KEY)) || 0; } catch (e) {}
-  if (t && Date.now() - t < SENT_MIN * 60000) $('sentCard').hidden = false;
+  if (t && Date.now() - t < SENT_MIN * 60000) showSent();
 }
 $('sentOk').onclick = () => { $('sentCard').hidden = true; try { localStorage.removeItem(SENT_KEY); } catch (e) {} };
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); checkSent(); } });
@@ -969,7 +973,7 @@ $('send').addEventListener('click', e => {
 });
 $('fallback').addEventListener('click', () => { copyNow(message()); markSent(); });
 // 換欄位時 focusout 會先於下一個 focusin 觸發，延後判斷避免送出列閃一下
-const isField = el => el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type !== 'button'));
+const isField = el => el && !(el.dataset && el.dataset.copy) && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type !== 'button'));
 document.addEventListener('focusin', e => { if (isField(e.target)) document.body.classList.add('typing'); });
 document.addEventListener('focusout', () => setTimeout(() => {
   document.body.classList.toggle('typing', isField(document.activeElement));
