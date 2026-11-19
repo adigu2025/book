@@ -551,8 +551,6 @@ const SOURCES = [
   { name: '經過看到' },
   { name: '其他', custom: true, wide: true },
 ];
-// 網址的 utm_source（例：?utm_source=threads），帶進訊息讓櫃台知道病人從哪個連結來。只留英數字，避免奇怪字元跑進訊息
-const UTM = (new URLSearchParams(location.search).get('utm_source') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 30);
 const EXPIRED_MSG = '原本選的時段已截止線上預約，請重新選擇';
 const $ = id => document.getElementById(id);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -837,7 +835,6 @@ function message() {
   if (note) lines.push('備註：' + note);
   const src = st.isNew ? sourceText() : '';
   if (src) lines.push('得知管道：' + src);
-  if (UTM) lines.push('來源：' + UTM);
   return lines.join('\n');
 }
 

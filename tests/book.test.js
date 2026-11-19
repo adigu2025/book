@@ -181,10 +181,9 @@ const M = [
     '【預約】初診\n姓名：王小明\n項目：傷口照護\n時間：12月21日（週一）晚診\n醫師：李品翰醫師\nＩＤ：A123456789\n生日：1980年3月5日\n（民國69年3月5日）\n手機：0912345678\n備註：右手割傷'],
   ['複診填了生日', msgOf(loadPage(), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明', bY: '1980', bM: '3', bD: '5' } }),
     '【預約】複診\n姓名：王小明\n生日：1980年3月5日\n（民國69年3月5日）\n項目：健保門診\n時間：12月15日（週二）早診\n醫師：林彥廷醫師'],
-  ['網址帶來源', msgOf(loadPage({ search: '?utm_source=threads&v=1' }), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明' } }),
-    '【預約】複診\n姓名：王小明\n項目：健保門診\n時間：12月15日（週二）早診\n醫師：林彥廷醫師\n來源：threads'],
-  ['來源只留英數字', msgOf(loadPage({ search: '?utm_source=%3Cb%3EIG%20ad' }), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明' } }).split('\n').pop(),
-    '來源：bIGad'],
+  // YT 2026-11-19：怕病人覺得被追蹤，網址參數一律不帶進訊息，來源只由初診病人自己勾選
+  ['網址帶 utm 也不寫進訊息', msgOf(loadPage({ search: '?utm_source=threads&v=1' }), { st: { item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明' } }),
+    '【預約】複診\n姓名：王小明\n項目：健保門診\n時間：12月15日（週二）早診\n醫師：林彥廷醫師'],
   ['取消', msgOf(loadPage(), { st: { change: true, action: '取消' }, val: { patientName: '王小明', origAppt: '12/15 早診', note: '臨時出差' } }),
     '【取消】\n姓名：王小明\n原預約：12/15 早診\n備註：臨時出差'],
   ['取消時就算選過項目也不帶', msgOf(loadPage(), { st: { change: true, action: '取消', item: P.item('健保門診'), date: '2026-12-15', session: 'AM' }, val: { patientName: '王小明', origAppt: '12/15 早診' } }),
