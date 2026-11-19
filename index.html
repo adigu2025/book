@@ -923,18 +923,23 @@ function revalidate() {
   else if (st.session && !avail.includes(st.session)) { st.session = null; st.expired = true; }
 }
 function refresh() { revalidate(); renderNotice(); renderAll(); }
-// 送出後跳到 LINE，回到網頁時提醒病人確認已按「傳送」。記在 sessionStorage，LINE 重新載入網頁也還在。
+// 送出後提醒病人確認已在 LINE 按「傳送」。LINE 內建瀏覽器跳 oaMessage 時常不觸發 visibilitychange，
+// 或關掉網頁重開成新分頁（sessionStorage 會清空），所以按下送出就先顯示卡片，記錄存 localStorage。
 const SENT_KEY = 'muzi-book-sent';
 const SENT_MIN = 30; // 送出後幾分鐘內回來才提醒
-function markSent() { try { sessionStorage.setItem(SENT_KEY, String(Date.now())); } catch (e) {} }
+function markSent() {
+  try { localStorage.setItem(SENT_KEY, String(Date.now())); } catch (e) {}
+  setTimeout(() => { $('sentCard').hidden = false; }, 600);
+}
 function checkSent() {
   let t = 0;
-  try { t = Number(sessionStorage.getItem(SENT_KEY)) || 0; } catch (e) {}
+  try { t = Number(localStorage.getItem(SENT_KEY)) || 0; } catch (e) {}
   if (t && Date.now() - t < SENT_MIN * 60000) $('sentCard').hidden = false;
 }
-$('sentOk').onclick = () => { $('sentCard').hidden = true; try { sessionStorage.removeItem(SENT_KEY); } catch (e) {} };
+$('sentOk').onclick = () => { $('sentCard').hidden = true; try { localStorage.removeItem(SENT_KEY); } catch (e) {} };
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); checkSent(); } });
 window.addEventListener('pageshow', e => { if (e.persisted) { refresh(); checkSent(); } });
+window.addEventListener('focus', checkSent);
 checkSent();
 setInterval(() => { if (!document.hidden && !document.body.classList.contains('typing')) refresh(); }, 60000);
 
