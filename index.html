@@ -208,7 +208,7 @@
   .day-btn.today { color: var(--mode-text); font-weight: 700; }
   .day-btn[aria-pressed="true"] { background: var(--mode); color: var(--on); font-weight: 700; }
   .day-off { color: var(--label3); font-weight: 400; }
-  .day-btn small, .day-off small { font-size: 9px; letter-spacing: 0; font-weight: 600; }
+  .day-btn small, .day-off small { font-size: 12px; letter-spacing: 0; font-weight: 600; }
   .day-btn.mo, .day-off.mo { font-size: 13px; }
   .picked { margin: 12px 0 0; font-size: 15px; color: var(--mode-text); font-weight: 600; min-height: 1.5em; }
 
@@ -226,7 +226,7 @@
   details.ref .body { padding: 2px 14px 16px; border-top: .5px solid var(--sep); }
   .schedule { display: grid; grid-template-columns: 46px repeat(7, minmax(0, 1fr)); gap: 4px; align-items: center; margin-top: 12px; }
   .schedule .day { text-align: center; font-size: 13px; font-weight: 600; color: var(--label2); padding-bottom: 4px; }
-  .schedule .time { font-size: 11px; line-height: 1.35; color: var(--label2); text-align: center; }
+  .schedule .time { font-size: 12px; line-height: 1.3; color: var(--label2); text-align: center; }
   .schedule .cell { display: flex; align-items: center; justify-content: center; min-height: 34px; }
   .dot {
     width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 13px; font-weight: 600;
@@ -317,6 +317,18 @@
   .bubble-meta { font-size: 13px; color: var(--label2); text-align: right; margin: 8px 4px 0; }
   .rev { font-size: 12px; color: var(--label3); margin: -8px 4px 0; }
 
+  /* 近期停診與代診公告（時刻表上方） */
+  .notice { background: var(--card); border-radius: 12px; padding: 12px 16px; }
+  .notice h2 { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: var(--sched-note); }
+  .notice ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 15px; }
+  .notice li b { font-weight: 600; }
+  .notice[hidden] { display: none; }
+  /* 送出後回到網頁的提醒卡 */
+  .sent-card { display: flex; align-items: center; gap: 10px; background: var(--mode-soft); color: var(--label); border-radius: 12px; padding: 10px 12px; font-size: 15px; line-height: 1.5; }
+  .sent-card p { margin: 0; flex: 1; }
+  .sent-card button { flex: none; border: 0; border-radius: 999px; background: var(--card); color: var(--label); font: inherit; font-size: 15px; font-weight: 600; padding: 6px 14px; cursor: pointer; }
+  .sent-card[hidden] { display: none; }
+
   /* 底部送出列 */
   /* 輸入中隱藏底部送出列，避免鍵盤彈出時送出列浮上來擋住正在填的欄位 */
   body.typing .bar { display: none; }
@@ -378,6 +390,11 @@
     <div class="card"><input id="patientName" maxlength="20" autocomplete="name" aria-label="姓名"></div>
   </section>
 
+  <section class="notice" id="notice" hidden aria-labelledby="notice-title">
+    <h2 id="notice-title">近期停診與代診</h2>
+    <ul id="notice-list"></ul>
+  </section>
+
   <details class="ref" id="sec-schedule">
     <summary>
       <span class="sym"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>
@@ -404,7 +421,7 @@
 
   <section id="sec-date" class="step">
     <h2 class="sec-title">日期 <span class="req">必填</span></h2>
-    <p class="note">開放 30 天內門診預約。<br>當天已開始的門診無法線上預約。<br>如有需要請來電 <a href="tel:073739496">07-3739496</a>。</p>
+    <p class="note">開放 30 天內門診預約。<br>當天門診開始前 1 小時截止線上預約。<br>如有需要請來電 <a href="tel:073739496">07-3739496</a>。</p>
     <div class="card" id="dates"></div>
   </section>
 
@@ -456,6 +473,7 @@
 
 <div class="bar">
   <div class="inner">
+    <div class="sent-card" id="sentCard" role="status" hidden><p>請確認已在 LINE 按下「傳送」，<br>收到櫃台回覆才算預約成功。</p><button type="button" id="sentOk">知道了</button></div>
     <div class="summary"><span class="tag" id="sumTag">複診</span><span id="sumText">尚未選擇預約項目</span></div>
     <a class="send incomplete" id="send" href="#">用 LINE 傳送預約</a>
     <div class="status warn" id="status" hidden></div>
@@ -469,11 +487,12 @@ document.write('<script src="holidays.js?v=' + Date.now() + '"><\/script>');
 </script>
 <script>
 // ===== 設定區 =====
-const APP_REVISION = '2026-11-05';
+const APP_REVISION = '2026-11-19';
 const LINE_ID = '@muzichengan';
 const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
 const oaMessageUrl = text => 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(text);
-const BOOK_FROM_DAYS = 0;   // 今天也算，當天已開始的時段由 sessionsOn() 自動過濾
+const BOOK_FROM_DAYS = 0;   // 今天也算，當天已截止的時段由 sessionsOn() 自動過濾
+const CUTOFF_MIN = 60;      // 當天門診開始前幾分鐘截止線上預約，櫃台才來得及回覆
 const BOOK_DAYS = 30;       // 開放幾天內
 const HOLIDAYS = window.HOLIDAYS || [];
 const NAME_KEY = 'muzi-book-name'; // 姓名只存在病人自己的手機，身分證、生日、手機號碼都不存
@@ -517,7 +536,7 @@ const SOURCES = [
   { name: '經過看到' },
   { name: '其他', custom: true, wide: true },
 ];
-const EXPIRED_MSG = '原本選的時段已經開始或已過期，請重新選擇';
+const EXPIRED_MSG = '原本選的時段已截止線上預約，請重新選擇';
 const $ = id => document.getElementById(id);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -526,11 +545,12 @@ function ymd(d) {
 }
 function parse(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
 function dateLabel(s) { const d = parse(s); return (d.getMonth() + 1) + '月' + d.getDate() + '日（週' + WK[d.getDay()] + '）'; }
-function sessionStarted(s, d) {
+// 當天這一診已過截止時間（門診開始前 CUTOFF_MIN 分鐘）
+function sessionClosed(s, d) {
   const now = new Date();
   if (ymd(d) !== ymd(now)) return false;
   const [h, m] = SESSION_TIME[s].split(' - ')[0].split(':').map(Number);
-  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m - CUTOFF_MIN;
 }
 // 這一天原本排班有門診的時段（不看停診）
 function baseSessions(d) { return Object.keys(DOC).filter(s => DOCTORS[DOC[s][d.getDay()]]); }
@@ -540,7 +560,7 @@ function doctorOf(s, d) { const c = DOCTORS[docCode(s, d)]; return c ? c.name : 
 function sessionsOn(item, d) {
   const key = ymd(d);
   if (HOLIDAYS.includes(key)) return [];
-  return baseSessions(d).filter(s => !HOLIDAYS.includes(key + ' ' + S[s]) && !sessionStarted(s, d) && (!item.doc || docCode(s, d) === item.doc));
+  return baseSessions(d).filter(s => !HOLIDAYS.includes(key + ' ' + S[s]) && !sessionClosed(s, d) && (!item.doc || docCode(s, d) === item.doc));
 }
 function days() {
   const t = new Date(); t.setHours(0, 0, 0, 0);
@@ -565,6 +585,23 @@ function renderSchedule() {
     [...DOC[s]].forEach(c => box.insertAdjacentHTML('beforeend', '<div class="cell">' +
       (DOCTORS[c] ? '<span class="dot dot-' + c.toLowerCase() + '">' + DOCTORS[c].name[0] + '</span>' : '') + '</div>'));
   });
+}
+// 今天起 BOOK_DAYS 天內的停診與代診，依日期排列
+function renderNotice() {
+  const from = ymd(new Date());
+  const end = new Date(); end.setDate(end.getDate() + BOOK_DAYS); const to = ymd(end);
+  const rows = [];
+  HOLIDAYS.forEach(line => {
+    const [date, sess] = String(line).trim().split(/\s+/);
+    if (date >= from && date <= to) rows.push([date + ' ' + (sess || ''), dateLabel(date) + (sess || '全天') + '，<b>停診</b>']);
+  });
+  Object.keys(COVER).forEach(k => {
+    const [date, sess] = k.split(' ');
+    if (date >= from && date <= to) rows.push([k, dateLabel(date) + sess + '，由<b>' + DOCTORS[COVER[k]].name + '</b>代診']);
+  });
+  rows.sort((a, b) => a[0] < b[0] ? -1 : 1);
+  $('notice-list').innerHTML = rows.map(r => '<li>' + r[1] + '</li>').join('');
+  $('notice').hidden = !rows.length;
 }
 function hint(text) { const p = document.createElement('div'); p.className = 'hint'; p.textContent = text; return p; }
 
@@ -875,8 +912,9 @@ $('t-new').onclick = () => { st.isNew = true; renderAll(); };
 fillBirthday();
 $('rev').textContent = APP_REVISION;
 renderSchedule();
+renderNotice();
 $('sec-schedule').addEventListener('toggle', e => { $('sched-hint').textContent = e.target.open ? '收合' : '展開'; });
-// 頁面開著太久（門診已開始、或過了半夜），已選的日期或時段要清掉，避免送出不能約的時段
+// 頁面開著太久（已過截止時間、或過了半夜），已選的日期或時段要清掉，避免送出不能約的時段
 function revalidate() {
   if (!st.item || !st.date) return;
   const d = parse(st.date);
@@ -884,9 +922,20 @@ function revalidate() {
   if (!avail.length) { st.date = null; st.session = null; st.expired = true; }
   else if (st.session && !avail.includes(st.session)) { st.session = null; st.expired = true; }
 }
-function refresh() { revalidate(); renderAll(); }
-document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
-window.addEventListener('pageshow', e => { if (e.persisted) refresh(); });
+function refresh() { revalidate(); renderNotice(); renderAll(); }
+// 送出後跳到 LINE，回到網頁時提醒病人確認已按「傳送」。記在 sessionStorage，LINE 重新載入網頁也還在。
+const SENT_KEY = 'muzi-book-sent';
+const SENT_MIN = 30; // 送出後幾分鐘內回來才提醒
+function markSent() { try { sessionStorage.setItem(SENT_KEY, String(Date.now())); } catch (e) {} }
+function checkSent() {
+  let t = 0;
+  try { t = Number(sessionStorage.getItem(SENT_KEY)) || 0; } catch (e) {}
+  if (t && Date.now() - t < SENT_MIN * 60000) $('sentCard').hidden = false;
+}
+$('sentOk').onclick = () => { $('sentCard').hidden = true; try { sessionStorage.removeItem(SENT_KEY); } catch (e) {} };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); checkSent(); } });
+window.addEventListener('pageshow', e => { if (e.persisted) { refresh(); checkSent(); } });
+checkSent();
 setInterval(() => { if (!document.hidden && !document.body.classList.contains('typing')) refresh(); }, 60000);
 
 // 記住姓名（只存在這支手機），複診病人下次打開不用再打
@@ -911,8 +960,9 @@ $('send').addEventListener('click', e => {
   }
   // 不攔截預設行為：由連結本身跳到 oaMessage，LINE 會把內容帶入輸入框
   copyNow(message());
+  markSent();
 });
-$('fallback').addEventListener('click', () => copyNow(message()));
+$('fallback').addEventListener('click', () => { copyNow(message()); markSent(); });
 // 換欄位時 focusout 會先於下一個 focusin 觸發，延後判斷避免送出列閃一下
 const isField = el => el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type !== 'button'));
 document.addEventListener('focusin', e => { if (isField(e.target)) document.body.classList.add('typing'); });
