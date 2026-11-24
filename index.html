@@ -4,7 +4,7 @@
 <script>
 // GitHub Pages 對這個網址下了 Cache-Control: max-age=600，網頁內的 meta 標籤蓋不過伺服器標頭。
 // 沒帶版本參數就立刻用當下時間戳記重新導向一次，確保每次開啟都抓到全新版本，不會卡在 10 分鐘快取裡。
-// 保留網址原本的其他參數（例如追蹤來源用的 utm），只加上 v。
+// 保留網址原本的其他參數，只加上 v（參數不會帶進預約訊息）。
 (function () {
   const q = new URLSearchParams(location.search);
   if (!q.has('v')) {
@@ -276,6 +276,12 @@
     background: var(--fill); border: 0; border-radius: 8px; padding: 0 4px; -webkit-appearance: none; appearance: none;
   }
   .bday #bY { flex-grow: 1.3; }
+  .bday.orig { padding: 0; gap: 8px; }
+  .bday.orig select { height: 46px; border-radius: 10px; }
+  .bday.orig #origDate { flex-grow: 2; }
+  .bday.orig #origSess[hidden] { display: none; }
+  .tag[hidden] { display: none; }
+  .reload { margin-top: 10px; display: block; width: 100%; border: 0; border-radius: 12px; min-height: 48px; background: var(--fill); color: var(--blue); font: inherit; font-weight: 600; cursor: pointer; }
   .bday[aria-invalid="true"] select { box-shadow: 0 0 0 2px var(--red); }
   .row input[aria-invalid="true"] { box-shadow: none; }
   .foot { font-size: 13px; line-height: 1.6; color: var(--label2); margin: 8px 4px 0; }
@@ -364,11 +370,11 @@
 </style>
 </head>
 <body>
-<div class="navbar" id="navbar" aria-hidden="true">線上預約 <span class="tag" id="navTag">複診</span></div>
+<div class="navbar" id="navbar" aria-hidden="true">線上預約 <span class="tag" id="navTag" hidden></span></div>
 <div class="wrap">
   <header>
     <p class="clinic">木子澄安診所</p>
-    <h1>線上預約 <span class="tag" id="tag">複診</span></h1>
+    <h1>線上預約 <span class="tag" id="tag" hidden></span></h1>
     <p class="lead">依照就醫需求填寫後送出，櫃台會在門診時間內 1 小時內回覆。</p>
     <ol class="flow">
       <li><b>填寫資料</b></li>
@@ -378,10 +384,10 @@
   </header>
 
   <section id="sec-type" class="step">
-    <h2 class="sec-title">預約類別</h2>
+    <h2 class="sec-title">預約類別 <span class="req">必填</span></h2>
     <div class="card">
       <div class="seg" role="group" aria-label="預約類別">
-        <button type="button" id="t-return" aria-pressed="true">複診<small>看過本診所</small></button>
+        <button type="button" id="t-return" aria-pressed="false">複診<small>看過本診所</small></button>
         <button type="button" id="t-new" aria-pressed="false">初診<small>第一次來</small></button>
         <button type="button" id="t-change" aria-pressed="false">取消／改約<small>已有預約</small></button>
       </div>
@@ -391,6 +397,7 @@
   <section id="sec-name" class="step">
     <h2 class="sec-title">姓名 <span class="req">必填</span></h2>
     <div class="card"><input id="patientName" maxlength="20" autocomplete="name" aria-label="姓名"></div>
+    <p class="foot" id="name-hint" hidden>已帶入上次填的姓名，替家人預約請改成看診的人。</p>
   </section>
 
   <section id="sec-action" class="step" hidden>
@@ -399,9 +406,11 @@
   </section>
 
   <section id="sec-orig" class="step" hidden>
-    <h2 class="sec-title"><label for="origAppt">原本預約的日期與時段</label> <span class="req">必填</span></h2>
-    <p class="note">例如：12月15日早診</p>
-    <div class="card"><input id="origAppt" maxlength="30"></div>
+    <h2 class="sec-title"><label for="origDate">原本預約的日期與時段</label> <span class="req">必填</span></h2>
+    <div class="card"><div class="bday orig" id="origAppt">
+      <select id="origDate" aria-label="原本預約的日期"></select>
+      <select id="origSess" aria-label="原本預約的時段"></select>
+    </div></div>
   </section>
 
   <section class="notice" id="notice" hidden aria-labelledby="notice-title">
@@ -501,14 +510,17 @@ document.write('<script src="holidays.js?v=' + Date.now() + '"><\/script>');
 </script>
 <script>
 // ===== 設定區 =====
-const APP_REVISION = '2026-11-19';
+const APP_REVISION = '2026-11-24';
 const LINE_ID = '@muzichengan';
 const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
 const oaMessageUrl = text => 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(text);
 const BOOK_FROM_DAYS = 0;   // 今天也算，當天已截止的時段由 sessionsOn() 自動過濾
 const CUTOFF_MIN = 60;      // 當天門診開始前幾分鐘截止線上預約，櫃台才來得及回覆
 const BOOK_DAYS = 30;       // 開放幾天內
+// holidays.js 沒載入（網路中斷）時不能當成「沒有停診」，否則停診日照樣約得到，所以要擋住新預約
+const DATA_OK = Array.isArray(window.HOLIDAYS);
 const HOLIDAYS = window.HOLIDAYS || [];
+const NO_DATA_MSG = '停診資料沒載入，請按「重新整理」或來電預約';
 const NAME_KEY = 'muzi-book-name'; // 姓名只存在病人自己的手機，身分證、生日、手機號碼都不存
 
 const S = { AM: '早診', PM: '午診', EVE: '晚診' };
@@ -539,7 +551,8 @@ const COVER = {};
 
 const WK = ['日', '一', '二', '三', '四', '五', '六'];
 // change：取消／改約；action 是「取消」或「改約」
-const st = { isNew: false, change: false, action: null, item: null, date: null, session: null, tried: false, expired: false, src: new Set(), srcSub: new Set() };
+// typed：病人是否已選預約類別。不預設複診，避免初診病人沒注意就以複診送出
+const st = { typed: false, isNew: false, change: false, action: null, item: null, date: null, session: null, tried: false, expired: false, src: new Set(), srcSub: new Set() };
 // 初診：從哪裡知道本診所。有 sub 的選項，選了才展開第二層（也可複選，不選第二層也可以）。
 const SOURCES = [
 // 排列：主力社群媒體放第一格（第二層細分平台），Google 在旁邊；hint 是按鈕上的小字說明。
@@ -615,6 +628,7 @@ function renderNotice() {
   });
   Object.keys(COVER).forEach(k => {
     const [date, sess] = k.split(' ');
+    if (HOLIDAYS.includes(date) || HOLIDAYS.includes(k)) return; // 已停診，代診不生效
     if (date >= from && date <= to) rows.push([k, dateLabel(date) + sess + '，由<b>' + DOCTORS[COVER[k]].name + '</b>代診']);
   });
   rows.sort((a, b) => a[0] < b[0] ? -1 : 1);
@@ -625,7 +639,7 @@ function hint(text) { const p = document.createElement('div'); p.className = 'hi
 
 // 選完後帶到下一個步驟
 function goNext(fromId) {
-  const order = ['sec-action', 'sec-orig', 'sec-item', 'sec-other', 'sec-date', 'sec-session', 'sec-new', 'sec-note'];
+  const order = ['sec-type', 'sec-name', 'sec-action', 'sec-orig', 'sec-item', 'sec-other', 'sec-date', 'sec-session', 'sec-new', 'sec-note'];
   for (let i = order.indexOf(fromId) + 1; i < order.length; i++) {
     const el = $(order[i]);
     if (!el.hidden) {
@@ -658,6 +672,13 @@ function renderItems() {
 function renderDates() {
   const box = $('dates'); box.innerHTML = '';
   if (!st.item) { box.appendChild(hint('請先選擇預約項目')); return; }
+  if (!DATA_OK) {
+    box.appendChild(hint(NO_DATA_MSG));
+    const r = document.createElement('button'); r.type = 'button'; r.className = 'reload'; r.textContent = '重新整理';
+    r.onclick = () => location.reload();
+    box.appendChild(r);
+    return;
+  }
   const list = days();
   const first = list[0], last = list[list.length - 1];
   const range = document.createElement('p'); range.className = 'cal-range';
@@ -724,6 +745,30 @@ function renderSessions() {
   box.appendChild(grid);
 }
 
+// 改約／取消：原本預約的日期與時段。範圍是今天起 60 天，不扣停診日（原本約好之後才公告停診的也要選得到）
+const ORIG_DAYS = 60;
+function fillOrig() {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  let html = '<option value="">－ 選擇日期 －</option><option value="unknown">不記得，請櫃台幫我查</option>';
+  for (let i = 0; i <= ORIG_DAYS; i++) { const d = new Date(t); d.setDate(t.getDate() + i); html += '<option value="' + ymd(d) + '">' + dateLabel(ymd(d)) + '</option>'; }
+  const keep = $('origDate').value;
+  $('origDate').innerHTML = html; $('origDate').value = keep;
+  fillOrigSess();
+}
+function fillOrigSess() {
+  const v = $('origDate').value, keep = $('origSess').value;
+  const ss = v && v !== 'unknown' ? baseSessions(parse(v)) : [];
+  $('origSess').hidden = !ss.length;
+  $('origSess').innerHTML = (ss.length > 1 ? '<option value="">－ 時段 －</option>' : '') + ss.map(s => '<option value="' + s + '">' + S[s] + '</option>').join('');
+  $('origSess').value = ss.includes(keep) ? keep : ss.length === 1 ? ss[0] : '';
+}
+// 回傳「12月15日（週二）早診」；沒選完回傳空字串
+function origText() {
+  const v = $('origDate').value;
+  if (v === 'unknown') return '不記得，請櫃台幫我查';
+  if (!v || !S[$('origSess').value]) return '';
+  return dateLabel(v) + S[$('origSess').value];
+}
 function phoneVal() { return $('phone').value.replace(/[\s-]/g, ''); }
 function idVal() { return $('idNumber').value.replace(/\s/g, '').toUpperCase(); }
 // 身分證與新式居留證（英文字母＋1/2/8/9＋8 碼數字）做檢查碼驗證；其他格式視為舊式居留證或護照
@@ -820,10 +865,10 @@ function itemText() {
 }
 function message() {
   const name = '姓名：' + ($('patientName').value.trim() || '（未填）');
-  const lines = st.change ? ['【' + (st.action || '取消／改約') + '】', name] : ['【預約】' + (st.isNew ? '初診' : '複診'), name];
+  const lines = st.change ? ['【' + (st.action || '取消／改約') + '】', name] : ['【預約】' + (!st.typed ? '（未選類別）' : st.isNew ? '初診' : '複診'), name];
   // 複診、取消、改約的生日是選填，有填才帶，方便櫃台確認是哪一位
   if (!st.isNew && birthVal()) lines.push('生日：' + birthdayText());
-  if (st.change) lines.push('原預約：' + ($('origAppt').value.trim() || '（未填）'));
+  if (st.change) lines.push('原預約：' + (origText() || '（未填）'));
   if (!cancelling()) {
     lines.push((st.change ? '改為：' : '項目：') + (itemText() || '（未選）'));
     lines.push('時間：' + (st.date ? dateLabel(st.date) + (st.session ? S[st.session] : '（未選時段）') : '（未選）'));
@@ -844,10 +889,13 @@ function message() {
 // 回傳所有缺漏，依畫面由上而下排序
 function missing() {
   const list = [];
+  if (!st.typed) list.push({ sec: 'sec-type', msg: '請選擇預約類別：複診、初診或取消／改約' });
   if (!$('patientName').value.trim()) list.push({ sec: 'sec-name', input: 'patientName', msg: '請填寫姓名' });
   if (st.change && !st.action) list.push({ sec: 'sec-action', msg: '請選擇要取消還是改約' });
-  if (st.change && !$('origAppt').value.trim()) list.push({ sec: 'sec-orig', input: 'origAppt', msg: '請填寫原本預約的日期與時段' });
+  if (st.change && !$('origDate').value) list.push({ sec: 'sec-orig', input: 'origAppt', msg: '請選擇原本預約的日期（不記得可選「不記得」）' });
+  else if (st.change && !origText()) list.push({ sec: 'sec-orig', input: 'origAppt', msg: '請選擇原本預約的時段' });
   if (!cancelling()) {
+    if (!DATA_OK) list.push({ sec: 'sec-date', msg: NO_DATA_MSG });
     if (!st.item) list.push({ sec: 'sec-item', msg: '請選擇預約項目' });
     if (st.item && st.item.custom && !$('otherPurpose').value.trim()) list.push({ sec: 'sec-other', input: 'otherPurpose', msg: '請填寫看診目的' });
     if (!st.date) list.push({ sec: 'sec-date', msg: st.expired ? EXPIRED_MSG : '請選擇日期' });
@@ -872,10 +920,10 @@ function missing() {
 function markDone(miss) {
   const bad = new Set(miss.map(m => m.sec));
   const filled = {
-    'sec-type': true,
+    'sec-type': st.typed,
     'sec-name': !!$('patientName').value.trim(),
     'sec-action': !!st.action,
-    'sec-orig': !!$('origAppt').value.trim(),
+    'sec-orig': !!origText(),
     'sec-item': !!st.item,
     'sec-other': !!$('otherPurpose').value.trim(),
     'sec-date': !!st.date,
@@ -896,7 +944,7 @@ function update() {
   markDone(miss);
 
   const parts = [];
-  if (cancelling()) { if ($('origAppt').value.trim()) parts.push('取消 ' + $('origAppt').value.trim()); }
+  if (cancelling()) { if (origText()) parts.push('取消 ' + origText()); }
   else if (st.item) parts.push(itemText());
   if (st.date) { const d = parse(st.date); parts.push((d.getMonth() + 1) + '/' + d.getDate() + '（' + WK[d.getDay()] + '）' + (st.session ? S[st.session] : '')); }
   $('sumTag').textContent = modeName();
@@ -921,13 +969,14 @@ function update() {
     $('fallback').href = CHAT_URL;
   }
 }
-function modeName() { return st.change ? (st.action || '取消改約') : st.isNew ? '初診' : '複診'; }
+function modeName() { return !st.typed ? '未選類別' : st.change ? (st.action || '取消改約') : st.isNew ? '初診' : '複診'; }
 function renderAll() {
   document.body.classList.toggle('is-new', st.isNew);
-  $('t-return').setAttribute('aria-pressed', String(!st.isNew && !st.change));
+  $('t-return').setAttribute('aria-pressed', String(st.typed && !st.isNew && !st.change));
   $('t-new').setAttribute('aria-pressed', String(st.isNew));
   $('t-change').setAttribute('aria-pressed', String(st.change));
   $('tag').textContent = $('navTag').textContent = modeName();
+  $('tag').hidden = $('navTag').hidden = !st.typed;
   $('sec-src').hidden = !st.isNew;
   $('sec-new').hidden = false;
   // 複診、取消、改約共用初診資料區，只留選填的生日
@@ -963,12 +1012,21 @@ function copyNow(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
 }
 
-$('t-return').onclick = () => { st.isNew = false; st.change = false; renderAll(); };
-$('t-new').onclick = () => { st.isNew = true; st.change = false; renderAll(); };
-$('t-change').onclick = () => { st.isNew = false; st.change = true; renderAll(); };
-['patientName', 'origAppt', 'idNumber', 'phone', 'note', 'otherPurpose', 'srcOther'].forEach(id => $(id).addEventListener('input', update));
+// 第一次選類別時帶到下一步；之後切換類別不捲動
+function pickType(isNew, change) {
+  const first = !st.typed;
+  st.typed = true; st.isNew = isNew; st.change = change; renderAll();
+  if (first) goNext('sec-type');
+}
+$('t-return').onclick = () => pickType(false, false);
+$('t-new').onclick = () => pickType(true, false);
+$('t-change').onclick = () => pickType(false, true);
+['patientName', 'idNumber', 'phone', 'note', 'otherPurpose', 'srcOther'].forEach(id => $(id).addEventListener('input', update));
 ['bY', 'bM', 'bD'].forEach(id => $(id).addEventListener('change', () => { if (id !== 'bD') fillDays(); update(); }));
 fillBirthday();
+fillOrig();
+$('origDate').addEventListener('change', () => { fillOrigSess(); update(); });
+$('origSess').addEventListener('change', update);
 $('rev').textContent = APP_REVISION;
 renderSchedule();
 renderNotice();
@@ -981,7 +1039,7 @@ function revalidate() {
   if (!avail.length) { st.date = null; st.session = null; st.expired = true; }
   else if (st.session && !avail.includes(st.session)) { st.session = null; st.expired = true; }
 }
-function refresh() { revalidate(); renderNotice(); renderAll(); }
+function refresh() { revalidate(); renderNotice(); fillOrig(); renderAll(); }
 // 送出後提醒病人確認已在 LINE 按「傳送」。LINE 內建瀏覽器跳 oaMessage 時常不觸發 visibilitychange，
 // 或關掉網頁重開成新分頁（sessionStorage 會清空），所以按下送出就先顯示卡片，記錄存 localStorage。
 const SENT_KEY = 'muzi-book-sent';
@@ -1005,8 +1063,13 @@ checkSent();
 setInterval(() => { if (!document.hidden && !document.body.classList.contains('typing')) refresh(); }, 60000);
 
 // 記住姓名（只存在這支手機），複診病人下次打開不用再打
-try { const n = localStorage.getItem(NAME_KEY); if (n) $('patientName').value = n; } catch (e) {}
+// 自動帶入時顯示提示，家人共用手機時才不會用上一位的姓名送出；改過姓名就收起提示
+let savedName = '';
+try { savedName = localStorage.getItem(NAME_KEY) || ''; } catch (e) {}
+if (savedName) $('patientName').value = savedName;
+$('name-hint').hidden = !savedName;
 $('patientName').addEventListener('input', () => {
+  $('name-hint').hidden = true;
   try { localStorage.setItem(NAME_KEY, $('patientName').value.trim()); } catch (e) {}
 });
 
