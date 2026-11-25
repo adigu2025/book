@@ -237,6 +237,18 @@ expect('D2：沒記住姓名不顯示提示', loadPage().$('name-hint').hidden =
   p.$('origDate').value = 'unknown';
   expect('O2：不記得原預約可以送出', msgs(p).length === 0, msgs(p).join('；'));
 }
+// 灰字精簡（2026-11-25）：只留 YT 指定的說明字，其他灰色說明拿掉
+expect('灰字：頁首只留回覆時間', html.includes('<p class="lead">櫃台會在門診時間，一小時內回覆。</p>'));
+expect('灰字：頁首不放流程', !html.includes('class="flow"'));
+expect('灰字：類別按鈕不放說明', !/<button[^>]*id="t-(return|new|change)"[^>]*>[^<]*<small>/.test(html));
+expect('灰字：改約取消按鈕不放說明', !html.includes('換一個日期或時段'));
+{
+  const p = loadPage();
+  p.$('t-return').onclick();
+  expect('灰字：生日旁不放說明', p.$('new-req').textContent === '' && p.$('new-req').hidden === true, p.$('new-req').textContent);
+}
+['以上資料僅供本診所', '妥善保管。', '按下傳送鈕後，這段內容會自動帶入 LINE 輸入框', '開放 30 天內門診預約。', '07-3739496</a>。']
+  .forEach(t => expect('灰字：要保留「' + t + '」', html.includes(t)));
 
 if (fail) { console.log(fail + ' 項沒過'); process.exit(1); }
 console.log('預約頁檢查全部通過（停診 ' + (win.HOLIDAYS || []).length + ' 筆、代診 ' + (win.COVER || []).length + ' 筆）');

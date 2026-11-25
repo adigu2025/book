@@ -122,10 +122,6 @@
     transition: background .2s var(--ease), color .2s var(--ease);
   }
   .lead { margin: 4px 0 0; color: var(--label2); font-size: 15px; }
-  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 15px; color: var(--label2); }
-  .flow li { display: flex; align-items: center; gap: 6px; }
-  .flow li + li::before { content: "›"; color: var(--label3); font-size: 19px; line-height: 1; }
-  .flow b { color: var(--label); font-weight: 600; }
 
   /* 步驟：標題在卡片外（iOS 分組清單的區段標頭） */
   .sec-title {
@@ -154,10 +150,9 @@
   .seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; background: var(--fill); border-radius: 12px; padding: 3px; }
   .seg button {
     border: 0; background: transparent; color: var(--label); font: inherit; font-size: 17px; font-weight: 500;
-    min-height: 56px; padding: 8px; border-radius: 10px; cursor: pointer; display: grid; place-content: center; gap: 0;
+    min-height: 48px; padding: 8px; border-radius: 10px; cursor: pointer; display: grid; place-content: center; gap: 0;
     touch-action: manipulation; transition: background .2s var(--ease), box-shadow .2s var(--ease), transform .1s var(--ease);
   }
-  .seg button small { font-size: 13px; font-weight: 400; color: var(--label2); }
   .seg button:active { transform: scale(.97); }
   .seg button[aria-pressed="true"] { background: var(--card); box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); font-weight: 600; }
   #t-return[aria-pressed="true"] { color: var(--ret-text); }
@@ -375,21 +370,16 @@
   <header>
     <p class="clinic">木子澄安診所</p>
     <h1>線上預約 <span class="tag" id="tag" hidden></span></h1>
-    <p class="lead">依照就醫需求填寫後送出，櫃台會在門診時間內 1 小時內回覆。</p>
-    <ol class="flow">
-      <li><b>填寫資料</b></li>
-      <li>開啟 LINE</li>
-      <li>按「傳送」</li>
-    </ol>
+    <p class="lead">櫃台會在門診時間，一小時內回覆。</p>
   </header>
 
   <section id="sec-type" class="step">
     <h2 class="sec-title">預約類別 <span class="req">必填</span></h2>
     <div class="card">
       <div class="seg" role="group" aria-label="預約類別">
-        <button type="button" id="t-return" aria-pressed="false">複診<small>看過本診所</small></button>
-        <button type="button" id="t-new" aria-pressed="false">初診<small>第一次來</small></button>
-        <button type="button" id="t-change" aria-pressed="false">取消／改約<small>已有預約</small></button>
+        <button type="button" id="t-return" aria-pressed="false">複診</button>
+        <button type="button" id="t-new" aria-pressed="false">初診</button>
+        <button type="button" id="t-change" aria-pressed="false">取消／改約</button>
       </div>
     </div>
   </section>
@@ -510,7 +500,7 @@ document.write('<script src="holidays.js?v=' + Date.now() + '"><\/script>');
 </script>
 <script>
 // ===== 設定區 =====
-const APP_REVISION = '2026-11-24';
+const APP_REVISION = '2026-11-25';
 const LINE_ID = '@muzichengan';
 const CHAT_URL = 'https://line.me/R/ti/p/' + encodeURIComponent(LINE_ID);
 const oaMessageUrl = text => 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_ID) + '/?' + encodeURIComponent(text);
@@ -652,7 +642,7 @@ function goNext(fromId) {
 const cancelling = () => st.change && st.action === '取消';
 function renderActions() {
   const box = $('actions'); box.innerHTML = '';
-  ['改約', '取消'].forEach(a => box.appendChild(btn('<b>' + a + '</b><span>' + (a === '改約' ? '換一個日期或時段' : '不來了') + '</span>', st.action === a, () => {
+  ['改約', '取消'].forEach(a => box.appendChild(btn('<b>' + a + '</b>', st.action === a, () => {
     const changed = st.action !== a;
     st.action = a; renderAll();
     if (changed) goNext('sec-action');
@@ -981,8 +971,8 @@ function renderAll() {
   $('sec-new').hidden = false;
   // 複診、取消、改約共用初診資料區，只留選填的生日
   $('new-title').textContent = st.isNew ? '初診資料' : '生日';
-  $('new-req').textContent = st.isNew ? '必填' : '選填，方便櫃台確認是哪一位';
-  $('new-req').className = st.isNew ? 'req' : 'opt-tag';
+  $('new-req').hidden = !st.isNew; // 生日選填，不放說明字
+  $('new-req').textContent = st.isNew ? '必填' : '';
   $('row-id').hidden = $('row-phone').hidden = $('foot-id').hidden = !st.isNew;
   $('sec-action').hidden = $('sec-orig').hidden = !st.change;
   ['sec-item', 'sec-date', 'sec-session'].forEach(id => { $(id).hidden = cancelling(); });
